@@ -9,7 +9,7 @@ public class MovePieces : MonoBehaviour
     TilePiece moving;
     Point NewIndex;
     Vector2 mouseStart; // utwórz nowy wektor ktory zapisze pozycje myszki przy kliknieciu
-    //Vector2 mouseEnd;   // utwórz nowy wektor ktory zapisze pozycje myszki przy odkliknieciu
+    public Vector2 move_direction_vector; //docelowo wartosc [1,0] itp aby wskazac kierunek zamiany indeksu
     private void Awake()
     {
         instance = this;    
@@ -26,12 +26,18 @@ public class MovePieces : MonoBehaviour
     public void DropPiece(TilePiece piece)
     {
         if (moving == null) return; // jeżeli bool moving ma wartość null
-        mouseStart = Input.mousePosition; // przy odkliknieciu znajdz wektor
-        game.ResetPiece(piece); //wywołaj funkcje ResetPiece
-        moving = null;
-        Debug.Log("Unclicked mouse on position : " + mouseStart.x + " , " + mouseStart.y);
+        Debug.Log("Dropped");
+        //if (!NewIndex.Equals(moving.index))        
+            //game.FlipPieces(moving.index, NewIndex);
         
+        //else        
+            game.ResetPiece(piece); //wywołaj funkcje ResetPiece
+        
+        moving = null;
+                   
     }
+
+    
 
     // Start is called before the first frame update
     void Start()
@@ -61,12 +67,15 @@ public class MovePieces : MonoBehaviour
             }//jeżeli dlugosc wektora kierunkowego jest > 16 to:
 
             NewIndex.Add_indirect(add); // dodaj do zmiennej typu Point NewIndex zmienną add, jeden z wariantów : (1,0), (-1,0), (0,1), (0,-1)
-            Vector2 pos = game.GetPositionFromPoint(moving.index); 
+            Vector2 pos = game.GetPositionFromPoint(moving.index);
             //utwórz wektor[x,y] "pos" o wartosci pozycji obecnego elementu. 
             //GameBoard game -> GetPostiionFromPoint ( TilePiece moving -> index (Point)) 
 
             if (!NewIndex.Equals(moving.index))             //jezeli funkcja NewIndex typu Point zwroci true to :
-                pos += Point.Multiply(add, 10).ToVector();   //dodaj do zmiennej "pos" typu Vector2 nowy wektor kierunkowy o dlugosci 8
+            {
+                move_direction_vector = pos;
+                pos += Point.Multiply(add, 10).ToVector();   //dodaj do zmiennej "pos" typu Vector2 nowy wektor kierunkowy o dlugosci 10
+            }
 
             moving.MovePositionTo(pos); //uzyj funkcji MovePositionTo z parametrem pos typu Vector2 ze zmiennej moving typu TilePiece
         }

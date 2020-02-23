@@ -6,9 +6,9 @@ using UnityEngine.EventSystems;
 
 public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
-    public int currency_type; //0 - x -> ta wartosc odpowiada za rodzaj currency
+    public int currency_type;   //0 - x -> ta wartosc odpowiada za rodzaj currency
     public Point index;
-
+    
     bool updating;
     Image img;
 
@@ -16,9 +16,12 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     public Vector2 pos;
     [HideInInspector]
     public RectTransform rect;
+    [HideInInspector]
+    public TilePiece flipped = null;
 
     public void Initialize(int v, Point p, Sprite orb)
     {
+        flipped = null; 
         img = GetComponent<Image>();
         rect = GetComponent<RectTransform>();
         currency_type = v;
@@ -59,7 +62,8 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     }
     public void MovePosition(Vector2 move)
     {
-        rect.anchoredPosition += Vector2.Lerp(rect.anchoredPosition, move, Time.deltaTime * 10f);
+        //rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition, move, Time.deltaTime * 10f); płynne
+        rect.anchoredPosition = move;
     }
     public void MovePositionTo(Vector2 moveto)
     {
@@ -76,7 +80,6 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         MovePieces.instance.DropPiece(this); //wywołaj funkcje droppiece
         Debug.Log("Drop " + transform.name);
-
     }
 
  

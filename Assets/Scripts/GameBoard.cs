@@ -85,13 +85,15 @@ public class GameBoard : MonoBehaviour
         {
             for (int y = 0; y < height; y++) //podwojny for - obsluga matrycy 2D
             {
-                int val = Board[x, y].currency_type;
+
+                Tile tile = GetTileAtPoint(new Point(x, y));
+                int val = tile.currency_type;
                 GameObject t = Instantiate(TilePiece, gameBoard); //zinstancjonowanie nowego GameObject na podstawie oryginału
                 TilePiece orb = t.GetComponent<TilePiece>();
                 RectTransform rect = t.GetComponent<RectTransform>(); //nie wiem ale dziala
                 rect.anchoredPosition = new Vector2(-182 + (33 * x), -182 + (33 * y)); //nie wiem ale dziala
                 orb.Initialize(val, new Point(x, y), Orbs[val]); //zmiana Sprite pojedynczego elementu
-                //Debug.Log("Cell [" + x + "," + y + "]" + " parameters : Currency Type = " + Board[x, y].currency_type + " -> " + Currencies[Board[x, y].currency_type]); //Log for viewing tile type
+                tile.SetPiece(piece);
 
             }
         }
@@ -123,7 +125,31 @@ public class GameBoard : MonoBehaviour
     public void ResetPiece(TilePiece piece)
     {
         piece.ResetPosition();
+        piece.flipped = null;
         update.Add(piece);
+    }
+
+    public void FlipPieces(Point origin, Point destination)
+    {
+        Tile tile_origin = GetTileAtPoint(origin);
+        TilePiece piece_origin = tile_origin.GetPiece();
+
+        Tile tile_destination = GetTileAtPoint(destination);
+        TilePiece piece_destination = tile_destination.GetPiece();
+
+        tile_origin.SetPiece(piece_destination);
+        tile_destination.SetPiece(piece_origin);
+
+        piece_origin.flipped = piece_destination;
+        piece_destination.flipped = piece_origin;
+
+        update.Add(piece_origin);
+        update.Add(piece_destination); 
+    }
+
+    Tile GetTileAtPoint(Point p)
+    {
+        return Board[p.x, p.y];
     }
 }
 
@@ -132,9 +158,23 @@ public class Tile
 { 
     public int currency_type;//0 - x -> ta wartosc odpowiada za rodzaj currency
     public Point index;
+    TilePiece piece;
     public Tile(int v, Point i)
     {
         currency_type = v;
         index = i;
+    }
+
+    public void SetPiece(TilePiece t)
+    {
+        piece = t;
+        currency_type = (piece == null) ? 0 : piece.currency_type;
+        if (piece == null) return;
+        piece.SetIndex(index);
+    }
+
+    public TilePiece GetPiece()
+    {
+        return piece;
     }
 }

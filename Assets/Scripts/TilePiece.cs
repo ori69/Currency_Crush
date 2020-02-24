@@ -73,14 +73,14 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     void IPointerDownHandler.OnPointerDown(PointerEventData eventData) //MouseButtonDown handler
     {
         if (updating) return;
-        Debug.Log("Grab " + transform.name);
+        //Debug.Log("Grab " + transform.name);
         MovePieces.instance.MovePiece(this);
     }
 
     void IPointerUpHandler.OnPointerUp(PointerEventData eventData) //MouseButtonUp handler
     {
         MovePieces.instance.DropPiece(this); //wywołaj funkcje droppiece
-        Debug.Log("Drop " + transform.name);
+        //Debug.Log("Drop " + transform.name);
     }
 
  

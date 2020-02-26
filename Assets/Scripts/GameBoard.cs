@@ -21,7 +21,7 @@ public class GameBoard : MonoBehaviour
     List<TilePiece> update;
     List<FlippedPieces> flipped;
     List<TilePiece> dead;
-    //List<Point> matched; // lista w której przechowywane będą punkty dopasowania
+    public int TotalDestroyedOrbsCounter;   
 
     // Start is called before the first frame update
     void Start()
@@ -29,6 +29,7 @@ public class GameBoard : MonoBehaviour
         update = new List<TilePiece>();
         flipped = new List<FlippedPieces>();
         dead = new List<TilePiece>();
+
         InitializeBoard();
         VerifyBoardInitialization();
         InstantiateBoard();
@@ -147,7 +148,7 @@ public class GameBoard : MonoBehaviour
                     else //Hit an end
                     {
                         //int newCurrencyType = Mathf.CeilToInt(Random.Range(1, amount_of_currency_types - 3));
-
+                        Debug.Log("Filling holes");
                         //fill the hole
                     }
                     break;
@@ -205,9 +206,11 @@ public class GameBoard : MonoBehaviour
                     {
                         tilepiece.gameObject.SetActive(false);
                         dead.Add(tilepiece);
+                        TotalDestroyedOrbsCounter++;
+
                         //tilepiece.currency_type = -1;
-                        
-                        Debug.Log(dead.Count); // zlicz ile elementów zostało zniszczonych w danym ruchu
+
+                        Debug.Log("Total destroyed orbs : "+TotalDestroyedOrbsCounter); // zlicz ile elementów zostało zniszczonych w danym ruchu
                     }
                     tile.SetPiece(null);
                 }
@@ -215,7 +218,7 @@ public class GameBoard : MonoBehaviour
                 ApplyGravityToBoard();
                 //wypełnij powstałe luki
             }
-            
+                
             flipped.Remove(flip); //usuń element flip po zaktualizowaniu
             update.Remove(piece);
         }

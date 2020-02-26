@@ -8,10 +8,10 @@ public class GameBoard : MonoBehaviour
     [Header("UI Elements")]
     public Sprite[] Orbs;
     public RectTransform gameBoard; //nie wiem ale dziala  
-    
-    [Header("Prefabs")]
-    public GameObject TilePiece; //cos z instancjonowaniem
 
+    [Header("Prefabs")]
+    public GameObject Tile_Piece; //cos z instancjonowaniem
+    
     static readonly int board_size = 12; //inicjalizacja wielkości planszy
     Tile[,] Tile; //inicjalizacja matrycy elementów
     
@@ -42,7 +42,7 @@ public class GameBoard : MonoBehaviour
             for (int y = 0; y < board_size; y++) //podwojny for - obsluga matrycy 2D
             {
 
-                Tile[x, y] = new Tile(Mathf.CeilToInt(Random.Range(1, amount_of_currency_types-3)), new Point(x, y));
+                Tile[x, y] = new Tile(Mathf.CeilToInt(Random.Range(1, amount_of_currency_types-6)), new Point(x, y));
                 //utwórz matryce 2D o typie Tile i parametrach  (lowowe 0 - ilosc typow currency , zmienna typu Point o wspolrzednych x i y)
                 Board_TileData[x + y * board_size] = Tile[x, y].currency_type; //wpisz wartosc currency_type do reprezentacji 1D
 
@@ -68,7 +68,7 @@ public class GameBoard : MonoBehaviour
                     if (!remove.Contains(val))
                         remove.Add(val);
 
-                    SetCurrencyTypeAtPoint(p, Mathf.CeilToInt(Random.Range(1, amount_of_currency_types-3)));
+                    SetCurrencyTypeAtPoint(p, Mathf.CeilToInt(Random.Range(1, amount_of_currency_types-6)));
                 }
             }
         }
@@ -102,7 +102,7 @@ public class GameBoard : MonoBehaviour
                 Tile tile = GetTileAtPoint(new Point(x, y));
 
                 int val = tile.currency_type;
-                GameObject t = Instantiate(TilePiece, gameBoard);                       //zinstancjonowanie nowego GameObject na podstawie oryginału
+                GameObject t = Instantiate(Tile_Piece, gameBoard);                      //zinstancjonowanie nowego GameObject na podstawie oryginału
                 TilePiece orb = t.GetComponent<TilePiece>();
                 RectTransform rect = t.GetComponent<RectTransform>();                   //nie wiem ale dziala
                 rect.anchoredPosition = new Vector2(-182 + (33 * x), -181 + (33 * y));  //nie wiem ale dziala
@@ -119,15 +119,15 @@ public class GameBoard : MonoBehaviour
     {
         for (int x = 0; x < board_size; x++) // idż od x = 0 do x = 11
         {
-            for (int y = 0; y < board_size ; y++) // idź od y = 11 do y = 0
+            for (int y = 0; y < board_size ; y++) // idź od y = 0 do y = 11
             {
                 Point p = new Point(x, y);
                 Tile tile = GetTileAtPoint(p);
                 int currency_type = GetCurrencyTypeAtPoint(p);
 
-                if (currency_type != 0) continue;
+                if (currency_type != 0) continue; //if not a hole move to the next
 
-                for (int ny = (y + 1); ny < board_size; ny++) // idź od y - 1 do -1
+                for (int ny = (y + 1); ny <= board_size; ny++) // idź od y + 1 do board_size !?
                 {
                     Point next = new Point(x, ny);
                     int nextCurrency_type = GetCurrencyTypeAtPoint(next);
@@ -147,8 +147,35 @@ public class GameBoard : MonoBehaviour
                     }
                     else //Hit an end
                     {
-                        //int newCurrencyType = Mathf.CeilToInt(Random.Range(1, amount_of_currency_types - 3));
                         Debug.Log("Filling holes");
+                        int newCurrencyType = Mathf.CeilToInt(Random.Range(1, amount_of_currency_types - 6));
+                        TilePiece piece = null;
+                        Point spawnPoint = new Point(x, board_size);
+
+                        if (dead.Count > 0)
+                        {
+                            TilePiece revived = dead[0];
+                            revived.gameObject.SetActive(true);
+                            revived.rect.anchoredPosition = GetPositionFromPoint(spawnPoint);
+                            piece = revived;
+                            
+                            dead.RemoveAt(0);
+                        }
+                        else //should never be called, is here just in case
+                        {
+                           /* GameObject obj = Instantiate(tilePiece, gameBoard);
+                            TilePiece t = obj.GetComponent<TilePiece>();
+                            RectTransform rect = obj.GetComponent<RectTransform>();
+                            rect.anchoredPosition = GetPositionFromPoint(spawnPoint);
+                            piece = t;*/
+                        }
+
+                        piece.Initialize(newCurrencyType, p, Orbs[newCurrencyType]);
+
+                        Tile hole = GetTileAtPoint(p);
+                        hole.SetPiece(piece);
+                        ResetPiece(piece);
+
                         //fill the hole
                     }
                     break;
@@ -204,12 +231,10 @@ public class GameBoard : MonoBehaviour
                     TilePiece tilepiece = tile.GetPiece();
                     if (tilepiece != null)
                     {
-                        tilepiece.gameObject.SetActive(false);
-                        dead.Add(tilepiece);
+                        tilepiece.gameObject.SetActive(false); // zamień elementy na nieaktywne
+                        dead.Add(tilepiece);                        
                         TotalDestroyedOrbsCounter++;
-
-                        //tilepiece.currency_type = -1;
-
+                        
                         Debug.Log("Total destroyed orbs : "+TotalDestroyedOrbsCounter); // zlicz ile elementów zostało zniszczonych w danym ruchu
                     }
                     tile.SetPiece(null);

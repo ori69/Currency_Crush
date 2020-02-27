@@ -8,6 +8,7 @@ public class GameBoard : MonoBehaviour
     [Header("UI Elements")]
     public Sprite[] Orbs;
     public RectTransform gameBoard; //nie wiem ale dziala  
+    public Text Score;
 
     [Header("Prefabs")]
     public GameObject Tile_Piece; //cos z instancjonowaniem
@@ -42,7 +43,7 @@ public class GameBoard : MonoBehaviour
             for (int y = 0; y < board_size; y++) //podwojny for - obsluga matrycy 2D
             {
 
-                Tile[x, y] = new Tile(Mathf.CeilToInt(Random.Range(1, amount_of_currency_types-6)), new Point(x, y));
+                Tile[x, y] = new Tile(RollCurrencyType(), new Point(x, y));
                 //utwórz matryce 2D o typie Tile i parametrach  (lowowe 0 - ilosc typow currency , zmienna typu Point o wspolrzednych x i y)
                 Board_TileData[x + y * board_size] = Tile[x, y].currency_type; //wpisz wartosc currency_type do reprezentacji 1D
 
@@ -68,7 +69,7 @@ public class GameBoard : MonoBehaviour
                     if (!remove.Contains(val))
                         remove.Add(val);
 
-                    SetCurrencyTypeAtPoint(p, Mathf.CeilToInt(Random.Range(1, amount_of_currency_types-6)));
+                    SetCurrencyTypeAtPoint(p, RollCurrencyType());
                 }
             }
         }
@@ -147,8 +148,8 @@ public class GameBoard : MonoBehaviour
                     }
                     else //Hit an end
                     {
-                        Debug.Log("Filling holes");
-                        int newCurrencyType = Mathf.CeilToInt(Random.Range(1, amount_of_currency_types - 6));
+                        //Debug.Log("Filling holes");
+                        int newCurrencyType = RollCurrencyType();
                         TilePiece piece = null;
                         Point spawnPoint = new Point(x, board_size);
 
@@ -234,8 +235,10 @@ public class GameBoard : MonoBehaviour
                         tilepiece.gameObject.SetActive(false); // zamień elementy na nieaktywne
                         dead.Add(tilepiece);                        
                         TotalDestroyedOrbsCounter++;
-                        
-                        Debug.Log("Total destroyed orbs : "+TotalDestroyedOrbsCounter); // zlicz ile elementów zostało zniszczonych w danym ruchu
+                        Score.text = TotalDestroyedOrbsCounter.ToString();
+
+
+                        //Debug.Log("Total destroyed orbs : "+TotalDestroyedOrbsCounter); // zlicz ile elementów zostało zniszczonych w danym ruchu
                     }
                     tile.SetPiece(null);
                 }
@@ -386,6 +389,27 @@ public class GameBoard : MonoBehaviour
 
             if (doAdd) points.Add(p); // jeżeli doAdd = true -> dodaj punkty
         }
+    }
+
+    int RollCurrencyType()
+    {
+        int currency_type = 1;
+        int ScoreThreshold = 50;
+        if (TotalDestroyedOrbsCounter < ScoreThreshold * 2) // less than 100 pts
+        { currency_type = Mathf.CeilToInt(Random.Range(1, amount_of_currency_types - 6)); }
+        if (TotalDestroyedOrbsCounter >= ScoreThreshold * 2) // more or equal than 100 pts
+        { currency_type = Mathf.CeilToInt(Random.Range(1, amount_of_currency_types - 5)); }
+        if (TotalDestroyedOrbsCounter >= ScoreThreshold * 4) // more or equal 200 pts
+        { currency_type = Mathf.CeilToInt(Random.Range(1, amount_of_currency_types - 4)); }
+        if (TotalDestroyedOrbsCounter >= ScoreThreshold * 10) // more or equa 500 pts
+        { currency_type = Mathf.CeilToInt(Random.Range(2, amount_of_currency_types - 4)); }
+        if (TotalDestroyedOrbsCounter >= ScoreThreshold * 20) // more or equal 1000 pts
+        { currency_type = Mathf.CeilToInt(Random.Range(2, amount_of_currency_types - 3)); }
+        if (TotalDestroyedOrbsCounter >= ScoreThreshold * 30) // more or equal 1500 pts
+        { currency_type = Mathf.CeilToInt(Random.Range(3, amount_of_currency_types - 2)); }
+        if (TotalDestroyedOrbsCounter >= ScoreThreshold * 50) // more or equal 2500 pts
+        { currency_type = Mathf.CeilToInt(Random.Range(3, amount_of_currency_types - 1)); }
+        return currency_type;
     }
 }
 

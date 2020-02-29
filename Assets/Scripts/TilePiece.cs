@@ -42,7 +42,6 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         transform.name = "Node [" + index.x + "," + index.y + "]";
     } //Tworzenie nazwy obiektu w grze
-
     public bool UpdatePiece() // funkcja zwracająca true jeżeli element jest w ruchu i false jeżeli jest w miejscu
     {
         if (Vector3.Distance(rect.anchoredPosition, pos) > 1) // jeżeli długość wektora róznicy starej i nowej poycji jest > 1 to :
@@ -61,7 +60,7 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     public void MovePosition(Vector2 move)
     {
         //rect.anchoredPosition += Vector2.Lerp(rect.anchoredPosition, move, Time.deltaTime * 10f);
-        rect.anchoredPosition += move * Time.deltaTime * 5f;
+        rect.anchoredPosition += move * Time.deltaTime * 15f;
         //rect.anchoredPosition = move;
     }
     public void MovePositionTo(Vector2 moveto)
@@ -79,6 +78,9 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         MovePieces.instance.DropPiece(); //wywołaj funkcje droppiece
         //Debug.Log("Drop " + transform.name);
     }
-
+    public void DestroyTile()
+    {
+        Destroy(this);
+    }
  
 }

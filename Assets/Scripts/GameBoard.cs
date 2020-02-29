@@ -36,6 +36,17 @@ public class GameBoard : MonoBehaviour
     int RegretPowerUpsAmount;
 
 
+    [Header("Vaal PowerUp Handlers")]
+    public Button VaalButton;
+    public Slider VaalPowerUp;
+    public Text VaalPowerUpsAmountText;
+    readonly int VaalPowerUpRequirements = 50;
+    [HideInInspector]
+    int VaalPowerUpProgress;
+    [HideInInspector]
+    int VaalPowerUpsAmount;
+
+
 
     [Header("Prefabs")]
     public GameObject Tile_Piece; //cos z instancjonowaniem
@@ -58,6 +69,7 @@ public class GameBoard : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+
         fills = new int[board_size];
         update = new List<TilePiece>();
         flipped = new List<FlippedPieces>();
@@ -65,8 +77,10 @@ public class GameBoard : MonoBehaviour
 
         JewellerPowerUpProgress = JewellerPowerUpRequirements;
         RegretPowerUpProgress = RegretPowerUpRequirements;
+        VaalPowerUpProgress = VaalPowerUpRequirements;
         JewellerButton.enabled = false;
         RegretButton.enabled = false;
+        VaalButton.enabled = false;
 
         InitializeBoard();
         VerifyBoardInitialization();
@@ -328,6 +342,7 @@ public class GameBoard : MonoBehaviour
                         case 8: // vaal orb
                             {
                                 Vaal_Orb_Match.Add(tilepiece);
+                                VaalPowerUpProgress--;
                                 break;
                             }
                         case 9: // chaos orb
@@ -421,6 +436,7 @@ public class GameBoard : MonoBehaviour
                             }
                         case 8: // vaal orb
                             {
+                                VaalPowerUpProgress--; 
                                 break;
                             }
                         case 9: // chaos orb
@@ -469,7 +485,8 @@ public class GameBoard : MonoBehaviour
                 }
                
                 JewellerPowerUp.value = JewellerPowerUpProgress;
-
+                 
+                // end
 
 
                 // Regret counters
@@ -488,6 +505,27 @@ public class GameBoard : MonoBehaviour
                 }
 
                 RegretPowerUp.value = RegretPowerUpProgress;
+
+                //end
+
+                // Vaal counters
+
+                while (VaalPowerUpProgress <= 0)
+                {
+                    int carry = VaalPowerUpProgress * (-1);
+                    VaalPowerUpProgress = VaalPowerUpRequirements - carry;
+                    VaalPowerUpsAmount++;
+                }
+
+                if (VaalPowerUpsAmount != 0)
+                {
+                    VaalButton.enabled = true;
+                    VaalPowerUpsAmountText.text = (VaalPowerUpsAmount.ToString());
+                }
+
+                VaalPowerUp.value = VaalPowerUpProgress;
+
+                // end
 
 
                 ComboBreaker.text = ("+ " + ComboCounter.ToString());
@@ -614,6 +652,33 @@ public class GameBoard : MonoBehaviour
         }
 
         return temp_secondary_match;
+    }
+
+    public void PowerUp_Regret()
+    {
+        if(RegretPowerUpsAmount >= 1)
+        {
+            DestroyBoard();
+            InitializeBoard();
+            VerifyBoardInitialization();
+            InstantiateBoard();
+
+            RegretPowerUpsAmount--;
+        }
+    }
+
+    void DestroyBoard() //instancjonowanie planszy
+    {
+        for (int x = 0; x < board_size; x++) //podwojny for - obsluga matrycy 2D
+        {
+            for (int y = 0; y < board_size; y++) //podwojny for - obsluga matrycy 2D
+            {
+                    Tile tile = GetTileAtPoint(new Point(x, y));
+                    TilePiece tilepiece = tile.GetPiece();
+                    tilepiece.gameObject.SetActive(false);
+                    Destroy(tilepiece.gameObject);
+            }
+        }      
     }
     FlippedPieces GetFlipped(TilePiece t)
     {

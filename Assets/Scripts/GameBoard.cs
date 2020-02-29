@@ -22,6 +22,9 @@ public class GameBoard : MonoBehaviour
     int JewellerPowerUpProgress;
     [HideInInspector]
     int JewellerPowerUpsAmount;
+    [HideInInspector]
+    static public bool UsingJeweller = false;
+    public static Point JewellerPowerUpPointIndex;
 
 
 
@@ -60,6 +63,7 @@ public class GameBoard : MonoBehaviour
     List<TilePiece> update;
     List<FlippedPieces> flipped;
     List<TilePiece> dead;
+
     
     [HideInInspector]
     public int TotalDestroyedOrbsCounter;
@@ -81,6 +85,8 @@ public class GameBoard : MonoBehaviour
         JewellerButton.enabled = false;
         RegretButton.enabled = false;
         VaalButton.enabled = false;
+
+        JewellerPowerUpPointIndex = null;
 
         InitializeBoard();
         VerifyBoardInitialization();
@@ -230,6 +236,14 @@ public class GameBoard : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (UsingJeweller && JewellerPowerUpPointIndex != null) //add point from jewellers powerup to update, must be done to avoid null exception
+        {
+            Tile JewellerUsedTile = GetTileAtPoint(JewellerPowerUpPointIndex);
+            TilePiece JewellerUsedTilePiece = JewellerUsedTile.GetPiece();
+            update.Add(JewellerUsedTilePiece);
+            
+        }
+
         List<TilePiece> finishedUpdating = new List<TilePiece>();   // utwórz listę elementów których uaktualnianie się zakończyło
 
         for (int i = 0; i < update.Count; i++)                     // pętla for powtarzająca się 
@@ -242,19 +256,27 @@ public class GameBoard : MonoBehaviour
 
         for (int i = 0; i < finishedUpdating.Count; i++)
         {
-            TilePiece piece = finishedUpdating[i];                  // utwórz zmienną typu TilePiece o wartości indeksu listy finishedupdating
-            //Debug.Log(finishedUpdating[i]);
-            FlippedPieces flip = GetFlipped(piece);                 //
+          
+            TilePiece piece = finishedUpdating[i];                  // utwórz zmienną typu TilePiece o wartości indeksu listy finishedupdating     
+            FlippedPieces flip = GetFlipped(piece);                 
             TilePiece flippedPiece = null;
+            
 
             int x = (int)piece.index.x;
             fills[x] = Mathf.Clamp(fills[x] - 1, 0, board_size);
 
 
             List<Point> matched = IsConnected(piece.index, true);
-            List<Point> secondary_matched = new List<Point>();
-            //ComboCounter = 0;
 
+            //add point from jewellers powerup to matched
+            if (UsingJeweller && JewellerPowerUpPointIndex != null)
+            {
+                matched.Add(JewellerPowerUpPointIndex);
+                UsingJeweller = false;
+                Debug.Log("Used Jeweller PowerUp");
+            }
+            List<Point> secondary_matched = new List<Point>();
+            
             bool wasFlipped = (flip != null);
 
             if (wasFlipped) // jeżeli zamienione zostały elementy
@@ -537,6 +559,9 @@ public class GameBoard : MonoBehaviour
             flipped.Remove(flip); //usuń element flip po zaktualizowaniu
             update.Remove(piece);
         }
+
+        JewellerPowerUpPointIndex = null;
+
     }
     private bool CheckFor4InLine(List<TilePiece> Currency_Match, int direction) // 0 - vertical check , 1 - horizontal check , returns true if 4 in one line
     {
@@ -601,6 +626,7 @@ public class GameBoard : MonoBehaviour
         else
             return false;
     }
+
     private List<Point> CreateSecondaryMatchList(List<TilePiece> Currency_Match) // for example : takes Jewellers_Orb_Match and returns list of points to add to secondary match
     {
         List<Point> temp_secondary_match = new List<Point>();
@@ -664,7 +690,29 @@ public class GameBoard : MonoBehaviour
             InstantiateBoard();
 
             RegretPowerUpsAmount--;
+            if (RegretPowerUpsAmount == 0)
+                RegretPowerUpsAmountText.text = ("");
+            else
+                RegretPowerUpsAmountText.text = RegretPowerUpsAmount.ToString();
+
         }
+        RegretButton.enabled = false;
+        RegretButton.enabled = true;
+    }
+
+    public void PowerUp_Jeweller()
+    {
+        if (JewellerPowerUpsAmount >= 1)
+        {
+            UsingJeweller = true;
+            JewellerPowerUpsAmount--;
+            if (JewellerPowerUpsAmount == 0)
+                JewellerPowerUpsAmountText.text = ("");
+            else
+                JewellerPowerUpsAmountText.text = JewellerPowerUpsAmount.ToString();
+        }
+        JewellerButton.enabled = false;
+        JewellerButton.enabled = true;
     }
 
     void DestroyBoard() //instancjonowanie planszy

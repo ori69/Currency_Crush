@@ -8,7 +8,7 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     public int currency_type;   //0 - x -> ta wartosc odpowiada za rodzaj currency
     public Point index;
-    
+        
     [HideInInspector]
     public Vector2 pos;
     [HideInInspector]
@@ -70,8 +70,13 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     public void OnPointerDown(PointerEventData eventData) //MouseButtonDown handler
     {
         if (updating) return;
-        //Debug.Log("Grab " + transform.name);
-        MovePieces.instance.MovePiece(this);
+
+        if (GameBoard.UsingJeweller) // check if jewller's powerup is in use
+        {
+            GameBoard.JewellerPowerUpPointIndex = this.index; // transfer selected tiliepiecs index to gameboard for further usage
+        }
+        else
+            MovePieces.instance.MovePiece(this);
     }
     public void OnPointerUp(PointerEventData eventData) //MouseButtonUp handler
     {

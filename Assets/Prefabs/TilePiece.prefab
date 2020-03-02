@@ -54,7 +54,6 @@ MonoBehaviour:
   index:
     x: 0
     y: 0
-  flipped: {fileID: 0}
   pos: {x: 0, y: 0}
   rect: {fileID: 0}
 --- !u!222 &2797234931318261833
@@ -83,7 +82,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: cba9743724a80f2448104db1c0f923c1, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 86fb64a234a81b44f964d0eaad2c72df, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1

@@ -17,7 +17,7 @@ public class GameBoard : MonoBehaviour
     public Button JewellerButton;
     public Slider JewellerPowerUp;
     public Text JewellerPowerUpsAmountText;
-    readonly int JewellerPowerUpRequirements = 40;
+    readonly int JewellerPowerUpRequirements = 200;
     [HideInInspector]
     int JewellerPowerUpProgress;
     [HideInInspector]
@@ -32,39 +32,56 @@ public class GameBoard : MonoBehaviour
     public Button RegretButton;
     public Slider RegretPowerUp;
     public Text RegretPowerUpsAmountText;
-    readonly int RegretPowerUpRequirements = 288;
+    readonly int RegretPowerUpRequirements = 720;
     [HideInInspector]
     int RegretPowerUpProgress;
     [HideInInspector]
     int RegretPowerUpsAmount;
+    List<Tile> RegretIndexList;
+
 
 
     [Header("Vaal PowerUp Handlers")]
     public Button VaalButton;
     public Slider VaalPowerUp;
     public Text VaalPowerUpsAmountText;
-    readonly int VaalPowerUpRequirements = 50;
+    readonly int VaalPowerUpRequirements = 100;
     [HideInInspector]
     int VaalPowerUpProgress;
     [HideInInspector]
     int VaalPowerUpsAmount;
+    public static List<Point> VaalPowerUpIndexes;
+    int VaalPowerUpEvent = 666;
+
+
+    [Header("Exalted PowerUp Handlers")]
+    public Button ExaltedButton;
+    public Slider ExaltedPowerUp;
+    public Text ExaltedPowerUpsAmountText;
+    readonly int ExaltedPowerUpRequirements = 1200;
+    [HideInInspector]
+    public int ExaltedPowerUpProgress;
+    [HideInInspector]
+    int ExaltedPowerUpsAmount;
+    public static List<Point> ExaltedPowerUpIndexes;
+    int ExaltedPowerUpEvent = 0;
 
 
 
     [Header("Prefabs")]
     public GameObject Tile_Piece; //cos z instancjonowaniem
-    
+
     static readonly int board_size = 12; //inicjalizacja wielkości planszy
     int[] fills;
     Tile[,] Tile; //inicjalizacja matrycy elementów
-    
+
     public static int amount_of_currency_types = 13; // deklaracja wartosci ilosci typow currency
-   
+
     List<TilePiece> update;
     List<FlippedPieces> flipped;
     List<TilePiece> dead;
 
-    
+
     [HideInInspector]
     public int TotalDestroyedOrbsCounter;
     [HideInInspector]
@@ -82,11 +99,21 @@ public class GameBoard : MonoBehaviour
         JewellerPowerUpProgress = JewellerPowerUpRequirements;
         RegretPowerUpProgress = RegretPowerUpRequirements;
         VaalPowerUpProgress = VaalPowerUpRequirements;
+        ExaltedPowerUpProgress = ExaltedPowerUpRequirements;
+
+
         JewellerButton.enabled = false;
         RegretButton.enabled = false;
         VaalButton.enabled = false;
+        ExaltedButton.enabled = false;
 
         JewellerPowerUpPointIndex = null;
+        VaalPowerUpIndexes = new List<Point>();
+
+        ExaltedPowerUpIndexes = new List<Point>();
+
+        RegretIndexList = new List<Tile>();
+
 
         InitializeBoard();
         VerifyBoardInitialization();
@@ -102,7 +129,7 @@ public class GameBoard : MonoBehaviour
 
                 Tile[x, y] = new Tile(RollCurrencyType(), new Point(x, y));
                 //utwórz matryce 2D o typie Tile i parametrach  (lowowe 0 - ilosc typow currency , zmienna typu Point o wspolrzednych x i y)
-                
+
             }
         }
         Debug.Log("Initialization of the board : Success");
@@ -110,7 +137,7 @@ public class GameBoard : MonoBehaviour
 
     void VerifyBoardInitialization() //Weryfikacja planszy
     {
-        List<int> remove;  
+        List<int> remove;
         for (int x = 0; x < board_size; x++) //podwojny for - obsluga matrycy 2D
         {
             for (int y = 0; y < board_size; y++) //podwojny for - obsluga matrycy 2D
@@ -159,21 +186,22 @@ public class GameBoard : MonoBehaviour
     {
         for (int x = 0; x < board_size; x++) // idż od x = 0 do x = 11
         {
-            for (int y = 0; y < board_size ; y++) // idź od y = 0 do y = 11
+            for (int y = 0; y < board_size; y++) // idź od y = 0 do y = 11
             {
                 Point p = new Point(x, y);
                 Tile tile = GetTileAtPoint(p);
                 int currency_type = GetCurrencyTypeAtPoint(p);
 
-                if (currency_type != 0) continue; //if not a hole move to the next
+                if (currency_type != 0) continue; //if not a hole or corrupt move to the next
 
                 for (int ny = (y + 1); ny <= board_size; ny++) // idź od y + 1 do board_size !?
                 {
                     Point next = new Point(x, ny);
                     int nextCurrency_type = GetCurrencyTypeAtPoint(next);
                     if (nextCurrency_type == 0) // very important, idk why but if it gets commented update gets miscounted which results in NullException
-                       continue;
-                    if (nextCurrency_type != -1)
+                        continue;
+
+                    if (nextCurrency_type != -1) // if next currency type is not hole
                     {
                         Tile got = GetTileAtPoint(next);
                         TilePiece piece = got.GetPiece();
@@ -189,7 +217,7 @@ public class GameBoard : MonoBehaviour
                     {
                         //Debug.Log("Filling holes");
                         int newCurrencyType = RollCurrencyType();
-                        TilePiece piece = null;
+                        TilePiece piece;// = null;
                         Point spawnPoint = new Point(x, (board_size + fills[x]));
 
                         if (dead.Count > 0)
@@ -198,19 +226,19 @@ public class GameBoard : MonoBehaviour
                             revived.gameObject.SetActive(true);
                             revived.rect.anchoredPosition = GetPositionFromPoint(spawnPoint);
                             piece = revived;
-                            
+
                             dead.RemoveAt(0);
                         }
                         else //should never be called, is here just in case
                         {
-                           /* GameObject obj = Instantiate(tilePiece, gameBoard);
+                            GameObject obj = Instantiate(Tile_Piece, gameBoard);
                             TilePiece t = obj.GetComponent<TilePiece>();
-                            RectTransform rect = obj.GetComponent<RectTransform>();
-                            rect.anchoredPosition = GetPositionFromPoint(spawnPoint);
-                            piece = t;*/
+                            piece = t;
                         }
 
                         piece.Initialize(newCurrencyType, p, Orbs[newCurrencyType]);
+                        piece.rect.anchoredPosition = GetPositionFromPoint(spawnPoint);
+
 
                         Tile hole = GetTileAtPoint(p);
                         hole.SetPiece(piece);
@@ -220,11 +248,11 @@ public class GameBoard : MonoBehaviour
 
                         //fill the hole
                     }
-                    
+
                     break;
                 }
 
-            
+
             }
         }
     }
@@ -241,10 +269,34 @@ public class GameBoard : MonoBehaviour
             Tile JewellerUsedTile = GetTileAtPoint(JewellerPowerUpPointIndex);
             TilePiece JewellerUsedTilePiece = JewellerUsedTile.GetPiece();
             update.Add(JewellerUsedTilePiece);
-            
+
+        }
+
+        if (VaalPowerUpEvent == 0 || VaalPowerUpEvent == 1)
+        {
+            foreach (Point p in VaalPowerUpIndexes)
+            {
+                Tile VaalPowerUpUsedTile = GetTileAtPoint(p);
+                TilePiece VaalPowerUpUsedTilePiece = VaalPowerUpUsedTile.GetPiece();
+                update.Add(VaalPowerUpUsedTilePiece);
+            }
+
+        }
+
+        if (ExaltedPowerUpEvent == 1)
+        {
+            foreach (Point p in ExaltedPowerUpIndexes)
+            {
+                Tile ExaltedPowerUpUsedTile = GetTileAtPoint(p);
+                TilePiece ExaltedPowerUpUsedTilePiece = ExaltedPowerUpUsedTile.GetPiece();
+                update.Add(ExaltedPowerUpUsedTilePiece);
+            }
+
         }
 
         List<TilePiece> finishedUpdating = new List<TilePiece>();   // utwórz listę elementów których uaktualnianie się zakończyło
+        List<Point> ToRemoveFromVaalPowerUpIndexes = new List<Point>();
+        List<Point> ToRemoveFromExaltedPowerUpIndexes = new List<Point>();
 
         for (int i = 0; i < update.Count; i++)                     // pętla for powtarzająca się 
         {
@@ -256,11 +308,11 @@ public class GameBoard : MonoBehaviour
 
         for (int i = 0; i < finishedUpdating.Count; i++)
         {
-          
+
             TilePiece piece = finishedUpdating[i];                  // utwórz zmienną typu TilePiece o wartości indeksu listy finishedupdating     
-            FlippedPieces flip = GetFlipped(piece);                 
+            FlippedPieces flip = GetFlipped(piece);
             TilePiece flippedPiece = null;
-            
+
 
             int x = (int)piece.index.x;
             fills[x] = Mathf.Clamp(fills[x] - 1, 0, board_size);
@@ -275,8 +327,31 @@ public class GameBoard : MonoBehaviour
                 UsingJeweller = false;
                 Debug.Log("Used Jeweller PowerUp");
             }
+
+            if (VaalPowerUpEvent == 0 || VaalPowerUpEvent == 1)
+            {
+                foreach (Point p in VaalPowerUpIndexes)
+                {
+                    matched.Add(p);
+                    ToRemoveFromVaalPowerUpIndexes.Add(p);
+                    VaalPowerUpEvent = 666;
+                }
+
+            }
+
+            if (ExaltedPowerUpEvent == 1)
+            {
+                foreach (Point p in ExaltedPowerUpIndexes)
+                {
+                    matched.Add(p);
+                    ToRemoveFromExaltedPowerUpIndexes.Add(p);
+                    ExaltedPowerUpEvent = 0;
+                }
+
+            }
+
             List<Point> secondary_matched = new List<Point>();
-            
+
             bool wasFlipped = (flip != null);
 
             if (wasFlipped) // jeżeli zamienione zostały elementy
@@ -311,6 +386,7 @@ public class GameBoard : MonoBehaviour
 
                 foreach (Point pnt in matched)                // usuń dopasowane elementy
                 {
+
                     Tile tile = GetTileAtPoint(pnt);
                     TilePiece tilepiece = tile.GetPiece();
 
@@ -319,21 +395,21 @@ public class GameBoard : MonoBehaviour
                         case 1: //orbs of alteration
                             {
                                 Orb_Of_Alteration_Match.Add(tilepiece);
-                                JewellerPowerUpProgress--; 
+                                JewellerPowerUpProgress--;
                                 break;
                             }
                         case 2: //jewellers orb
                             {
                                 Jewellers_Orb_Match.Add(tilepiece);
                                 JewellerPowerUpProgress -= 2;
-                                
+
                                 break;
                             }
                         case 3: // chromatic orb
                             {
                                 Chromatic_Orb_Match.Add(tilepiece);
                                 JewellerPowerUpProgress -= 6;
-                                
+
                                 break;
                             }
                         case 4: // alchemy orb
@@ -347,12 +423,13 @@ public class GameBoard : MonoBehaviour
                             {
                                 Orb_Of_Fusing_Match.Add(tilepiece);
                                 JewellerPowerUpProgress -= 8;
-                                
+
                                 break;
                             }
                         case 6: // regal orb
                             {
                                 Regal_Orb_Match.Add(tilepiece);
+                                ExaltedPowerUpProgress--;
                                 break;
                             }
                         case 7: // orb of regret
@@ -370,17 +447,19 @@ public class GameBoard : MonoBehaviour
                         case 9: // chaos orb
                             {
                                 Chaos_Orb_Match.Add(tilepiece);
+                                ExaltedPowerUpProgress -= 2;
                                 break;
                             }
                         case 10: // divine orb
                             {
                                 Divine_Orb_Match.Add(tilepiece);
+                                ExaltedPowerUpProgress -= 10;
                                 break;
-
                             }
                         case 11: // Exalted orb
                             {
                                 Exalted_Orb_Match.Add(tilepiece);
+                                ExaltedPowerUpProgress -= 120;
                                 break;
                             }
                         case 12: // Mirror Of Kalandra
@@ -390,7 +469,7 @@ public class GameBoard : MonoBehaviour
                             }
 
                     }       // adding tilepiece to it's corresponding currency pool -> sorting removed currency
-                    
+
                     secondary_matched.AddRange(CreateSecondaryMatchList(Orb_Of_Alteration_Match));
                     secondary_matched.AddRange(CreateSecondaryMatchList(Jewellers_Orb_Match));
                     secondary_matched.AddRange(CreateSecondaryMatchList(Chromatic_Orb_Match));
@@ -414,7 +493,7 @@ public class GameBoard : MonoBehaviour
                     tile.SetPiece(null);
                 }
 
-                
+
                 foreach (Point pnt_sec in secondary_matched)
                 {
                     Tile tile = GetTileAtPoint(pnt_sec);
@@ -458,7 +537,7 @@ public class GameBoard : MonoBehaviour
                             }
                         case 8: // vaal orb
                             {
-                                VaalPowerUpProgress--; 
+                                VaalPowerUpProgress--;
                                 break;
                             }
                         case 9: // chaos orb
@@ -492,7 +571,7 @@ public class GameBoard : MonoBehaviour
                 }
 
                 // Jewellers counters
-                
+
                 while (JewellerPowerUpProgress <= 0)
                 {
                     int carry = JewellerPowerUpProgress * (-1);
@@ -503,11 +582,11 @@ public class GameBoard : MonoBehaviour
                 if (JewellerPowerUpsAmount != 0)
                 {
                     JewellerButton.enabled = true;
-                    JewellerPowerUpsAmountText.text = (JewellerPowerUpsAmount.ToString()); 
+                    JewellerPowerUpsAmountText.text = (JewellerPowerUpsAmount.ToString());
                 }
-               
+
                 JewellerPowerUp.value = JewellerPowerUpProgress;
-                 
+
                 // end
 
 
@@ -547,13 +626,36 @@ public class GameBoard : MonoBehaviour
 
                 VaalPowerUp.value = VaalPowerUpProgress;
 
+
+
+                // end
+
+                // Exalted counters
+
+                while (ExaltedPowerUpProgress <= 0)
+                {
+                    int carry = ExaltedPowerUpProgress * (-1);
+                    ExaltedPowerUpProgress = ExaltedPowerUpRequirements - carry;
+                    ExaltedPowerUpsAmount++;
+                }
+
+                if (ExaltedPowerUpsAmount != 0)
+                {
+                    ExaltedButton.enabled = true;
+                    ExaltedPowerUpsAmountText.text = (ExaltedPowerUpsAmount.ToString());
+                }
+
+                ExaltedPowerUp.value = ExaltedPowerUpProgress;
+
+
+
                 // end
 
 
                 ComboBreaker.text = ("+ " + ComboCounter.ToString());
 
                 ApplyGravityToBoard();
-               
+
             }
 
             flipped.Remove(flip); //usuń element flip po zaktualizowaniu
@@ -561,6 +663,18 @@ public class GameBoard : MonoBehaviour
         }
 
         JewellerPowerUpPointIndex = null;
+
+        foreach (Point p in ToRemoveFromVaalPowerUpIndexes)
+        {
+            VaalPowerUpIndexes.Remove(p);
+        }
+
+        foreach (Point p in ToRemoveFromExaltedPowerUpIndexes)
+        {
+            ExaltedPowerUpIndexes.Remove(p);
+        }
+        VaalPowerUpEvent = 666;
+        ExaltedPowerUpEvent = 0;
 
     }
     private bool CheckFor4InLine(List<TilePiece> Currency_Match, int direction) // 0 - vertical check , 1 - horizontal check , returns true if 4 in one line
@@ -630,7 +744,7 @@ public class GameBoard : MonoBehaviour
     private List<Point> CreateSecondaryMatchList(List<TilePiece> Currency_Match) // for example : takes Jewellers_Orb_Match and returns list of points to add to secondary match
     {
         List<Point> temp_secondary_match = new List<Point>();
-        
+
         if (Currency_Match.Count > 3)
         {
             if (Currency_Match.Count == 4)
@@ -658,22 +772,22 @@ public class GameBoard : MonoBehaviour
             else // if more than 4 check if they are in one line
             {
                 if (CheckFor5OrMore(Currency_Match))// check if there are 5 or more in match
-                       
+
                     for (int x = 0; x < board_size; x++)
                     {
                         for (int y = 0; y < board_size; y++)
                         {
-                            Point compared_tile_index = new Point(x, y);                            
-                            int compared_tile_currency_type = GetCurrencyTypeAtPoint(compared_tile_index);                            
+                            Point compared_tile_index = new Point(x, y);
+                            int compared_tile_currency_type = GetCurrencyTypeAtPoint(compared_tile_index);
 
                             if (Currency_Match[0].currency_type == compared_tile_currency_type)
-                                temp_secondary_match.Add(compared_tile_index);                          
-                                
+                                temp_secondary_match.Add(compared_tile_index);
+
                         }
                     }
-                    
-            
-                
+
+
+
             }
         }
 
@@ -682,7 +796,7 @@ public class GameBoard : MonoBehaviour
 
     public void PowerUp_Regret()
     {
-        if(RegretPowerUpsAmount >= 1)
+        if (RegretPowerUpsAmount >= 1)
         {
             DestroyBoard();
             InitializeBoard();
@@ -715,18 +829,249 @@ public class GameBoard : MonoBehaviour
         JewellerButton.enabled = true;
     }
 
-    void DestroyBoard() //instancjonowanie planszy
+    public void PowerUp_VaalOrb()
+    {
+        if (VaalPowerUpsAmount >= 1)
+        {
+            ComboCounter = 0;
+            ComboBreaker.text = (ComboCounter.ToString());
+
+            int selectedevent = Mathf.CeilToInt(Random.Range(0, 100));
+
+            if (selectedevent >= 0 && selectedevent < 25)
+                selectedevent = 0;
+
+            if (selectedevent >= 25 && selectedevent < 50)
+                selectedevent = 1;
+
+            if (selectedevent >= 50 && selectedevent < 75)
+                selectedevent = 2;
+
+            if (selectedevent >= 75 && selectedevent < 100)
+                selectedevent = 3;
+
+            Debug.Log("Selected event :" + selectedevent);
+
+            VaalPowerUpEvent = selectedevent;
+
+            switch (selectedevent)
+            {
+                case 0: // random destruction select two pieces of the type and remove them from board
+                    {
+                        Debug.Log("Executing event :" + selectedevent);
+                        VaalPowerUpEvent = 0;
+
+                        List<Point> selected_to_be_rekt = new List<Point>();
+
+                        int SelectedCurrencyType1 = RollCurrencyType();
+                        int SelectedCurrencyType2 = RollCurrencyType();
+
+                        while (SelectedCurrencyType1 == SelectedCurrencyType2)
+                        { 
+                            SelectedCurrencyType2 = RollCurrencyType(); 
+                        }
+
+                        for (int x = 0; x < board_size; x++)
+                        {
+                            for (int y = 0; y < board_size; y++)
+                            {
+                                Point p = new Point(x, y);
+                                Tile t = GetTileAtPoint(p);
+                                if (t.currency_type == SelectedCurrencyType1 || t.currency_type == SelectedCurrencyType2)
+                                    selected_to_be_rekt.Add(p);                            
+                            }
+                        }
+
+
+                        Debug.Log("Removed pieces : " + selected_to_be_rekt.Count);
+                        VaalPowerUpIndexes.AddRange(selected_to_be_rekt);
+                        break;
+                    }
+
+                case 1: // select horizontal or vertical, then choose 
+                    {
+                        int choose_direction = Mathf.CeilToInt(Random.Range(0, 100));
+                        var direction = (choose_direction >= 50) ? 0 : 1; // 0 - horizontal , 1 - vertical
+                        if (direction == 0)
+                        {
+                            int choose_y = Mathf.CeilToInt(Random.Range(0, board_size - 2));
+
+                            for (int x = 0; x < board_size; x++)
+                            {
+                                Point p1 = new Point(x, choose_y);
+                                Point p2 = new Point(x, choose_y + 1);
+                                Point p3 = new Point(x, choose_y + 2);
+
+                                if (GetTileAtPoint(p1).currency_type != 13)     //destroy only if not corrupted
+                                    VaalPowerUpIndexes.Add(p1);
+
+                                if (GetTileAtPoint(p2).currency_type != 13)     //destroy only if not corrupted
+                                    VaalPowerUpIndexes.Add(p2);
+
+                                if (GetTileAtPoint(p2).currency_type != 13)     //destroy only if not corrupted
+                                    VaalPowerUpIndexes.Add(p3);
+                            }
+                        }// go horizontal
+
+                        if (direction == 1)
+                        {
+                            int choose_x = Mathf.CeilToInt(Random.Range(0, board_size - 1));
+                            for (int y = 0; y < board_size; y++)
+                            {
+                                Point p1 = new Point(choose_x, y);
+                                Point p2 = new Point(choose_x + 1, y);
+                                Point p3 = new Point(choose_x + 2, y);
+
+                                if (GetTileAtPoint(p1).currency_type != 13)     //destroy only if not corrupted
+                                    VaalPowerUpIndexes.Add(p1);
+
+                                if (GetTileAtPoint(p2).currency_type != 13)     //destroy only if not corrupted
+                                    VaalPowerUpIndexes.Add(p2);
+
+                                if (GetTileAtPoint(p2).currency_type != 13)     //destroy only if not corrupted
+                                    VaalPowerUpIndexes.Add(p3);
+                            }
+                        }// go vertical
+
+                        break;
+                    }
+
+                case 2:
+                    {
+                        CorruptBoard();
+                        break;
+                    }
+
+                case 3:
+                    {
+                        break;
+                    }
+
+            }
+
+            Debug.Log("Vaal orb selected event: " + selectedevent);
+            VaalPowerUpsAmount--;
+            if (VaalPowerUpsAmount == 0)
+                VaalPowerUpsAmountText.text = ("");
+            else
+                VaalPowerUpsAmountText.text = VaalPowerUpsAmount.ToString();
+
+        }
+        VaalButton.enabled = false;
+        VaalButton.enabled = true;
+    }
+
+    public void PowerUp_Exalted()
+    {
+        if (ExaltedPowerUpsAmount >= 1)
+        {
+            ComboCounter = 0;
+            ComboBreaker.text = (ComboCounter.ToString());
+            ExaltedPowerUpsAmount--;
+
+            Debug.Log("Executing event :exalted orb");
+            ExaltedPowerUpEvent = 1;
+
+            List<Point> available = new List<Point>();
+            List<Point> selected_to_be_rekt = new List<Point>();
+
+            for (int x = 0; x < board_size; x++) //podwojny for - obsluga matrycy 2D
+            {
+                for (int y = 0; y < board_size; y++) //podwojny for - obsluga matrycy 2D
+                {
+
+                    Point p = new Point(x, y);
+                    Tile tile = GetTileAtPoint(p);
+                    if (tile.currency_type != 13)
+                    {
+                        available.Add(p);
+                    }
+                }
+            }
+            Debug.Log("Available : " + available.Count);
+            int NewCounter = available.Count / 2;
+
+            for (int z = 0; z < NewCounter; z++)
+            {
+                int selected = Mathf.CeilToInt(Random.Range(0, available.Count));   // select number from list position
+                Point p = available[selected];                                      // create point from selected number
+                selected_to_be_rekt.Add(p);                                         // add selected point to selected list
+                available.Remove(p);                                                // remove same point from available list to avoid removing same piece twice
+
+            }
+
+            Debug.Log("Removed pieces : " + selected_to_be_rekt.Count);
+            ExaltedPowerUpIndexes.AddRange(selected_to_be_rekt);
+        }
+
+        if (ExaltedPowerUpsAmount == 0)
+            ExaltedPowerUpsAmountText.text = ("");
+        else
+            ExaltedPowerUpsAmountText.text = ExaltedPowerUpsAmount.ToString();
+
+        ExaltedButton.enabled = false;
+        ExaltedButton.enabled = true;
+    }         
+ 
+
+    void DestroyBoard() //zniszczenie planszy
     {
         for (int x = 0; x < board_size; x++) //podwojny for - obsluga matrycy 2D
         {
             for (int y = 0; y < board_size; y++) //podwojny for - obsluga matrycy 2D
             {
-                    Tile tile = GetTileAtPoint(new Point(x, y));
-                    TilePiece tilepiece = tile.GetPiece();
-                    tilepiece.gameObject.SetActive(false);
-                    Destroy(tilepiece.gameObject);
+                Tile tile = GetTileAtPoint(new Point(x, y));
+                TilePiece tilepiece = tile.GetPiece();
+                RegretIndexList.Add(tile); 
+                
+                tilepiece.gameObject.SetActive(false);
+                Destroy(tilepiece.gameObject);
+
             }
         }      
+    }
+
+    void CorruptBoard() // corrupt random 3x3 area on board
+    {
+        List<Point> CorruptedArea = new List<Point>();
+        List<Point> ToSelectFrom = new List<Point>();   //create list of points to select from
+        for (int x = 1; x < board_size - 1; x++)        //podwojny for - obsluga matrycy 2D
+        {
+            for (int y = 1; y < board_size - 1; y++)    //podwojny for - obsluga matrycy 2D
+            {
+                ToSelectFrom.Add(new Point(x, y));
+            }
+        }
+
+        int SelectTile = Mathf.CeilToInt(Random.Range(0, ToSelectFrom.Count + 1)); //select point from list
+        Point CorruptedAreaCenter = ToSelectFrom[SelectTile];
+
+        for (int x = -1; x <= 1; x++)
+        {
+            for (int y = -1; y <= 1; y++)
+            {
+                CorruptedArea.Add(new Point(x + CorruptedAreaCenter.x, y + CorruptedAreaCenter.y));
+            }
+        }
+
+        foreach (Point p in CorruptedArea) 
+        {
+            Tile tile = GetTileAtPoint(p);
+            TilePiece tilepiece = tile.GetPiece();
+            tilepiece.gameObject.SetActive(false);
+            Destroy(tilepiece.gameObject);
+
+            tile = GetTileAtPoint(p);
+            int val = 13;
+            GameObject t = Instantiate(Tile_Piece, gameBoard);                      //zinstancjonowanie nowego GameObject na podstawie oryginału
+            TilePiece orb = t.GetComponent<TilePiece>();
+            RectTransform rect = t.GetComponent<RectTransform>();                   //nie wiem ale dziala
+            rect.anchoredPosition = new Vector2(-182 + (33 * p.x), -181 + (33 * p.y));  //nie wiem ale dziala
+            orb.Initialize(val, p , Orbs[val]);                        //zmiana Sprite pojedynczego elementu
+            tile.SetPiece(orb);
+        } //change pieces to corrupted tile
+
+
     }
     FlippedPieces GetFlipped(TilePiece t)
     {
@@ -755,7 +1100,7 @@ public class GameBoard : MonoBehaviour
         Tile tileOne = GetTileAtPoint(origin);          //utwórz lokalną zmienną typu Tile -> trzymany na myszce
         TilePiece pieceOne = tileOne.GetPiece();        //utwórz lokalną zmienną typu TilePiece -> trzmany na myszce
 
-        if (GetCurrencyTypeAtPoint(destination) > 0)
+        if (GetCurrencyTypeAtPoint(destination) > 0 && GetCurrencyTypeAtPoint(destination) != 13 && GetCurrencyTypeAtPoint(origin) != 13)
         {
             Tile tileTwo = GetTileAtPoint(destination);     //utwórz lokalną zmienną typu Tile -> element do zamiany
             TilePiece pieceTwo = tileTwo.GetPiece();        //utwórz lokalną zmienną typu TilePiece -> element do zamiany
@@ -792,6 +1137,10 @@ public class GameBoard : MonoBehaviour
     {
         List<Point> connected = new List<Point>();
         int currency_type = GetCurrencyTypeAtPoint(p);
+        if (currency_type == 13)
+            return connected;
+
+
         Point[] directions = //tablica kierunków do sprawdzania
         {
             Point.Up,       //góra
@@ -805,7 +1154,6 @@ public class GameBoard : MonoBehaviour
             List<Point> line = new List<Point>();   //utwórz listę zawierającą 
 
             int same = 0; // licznik wartości currency_type
-
 
             for (int i = 1; i < 3; i++)
             {

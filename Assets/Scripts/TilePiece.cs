@@ -73,7 +73,10 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 
         if (GameBoard.UsingJeweller) // check if jewller's powerup is in use
         {
-            GameBoard.JewellerPowerUpPointIndex = this.index; // transfer selected tiliepiecs index to gameboard for further usage
+            if (this.currency_type != 13)
+            { 
+                GameBoard.JewellerPowerUpPointIndex = this.index; // transfer selected tiliepiecs index to gameboard for further usage
+            } 
         }
         else
             MovePieces.instance.MovePiece(this);

@@ -8,13 +8,13 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
     public int currency_type;   //0 - x -> ta wartosc odpowiada za rodzaj currency
     public Point index;
-        
+       
     [HideInInspector]
     public Vector2 pos;
     [HideInInspector]
     public RectTransform rect;
 
-    bool updating;
+    public bool updating;
     Image img;
 
     public void Initialize(int v, Point p, Sprite orb)
@@ -44,28 +44,23 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     } //Tworzenie nazwy obiektu w grze
     public bool UpdatePiece() // funkcja zwracająca true jeżeli element jest w ruchu i false jeżeli jest w miejscu
     {
-        if (Vector3.Distance(rect.anchoredPosition, pos) > 1) // jeżeli długość wektora róznicy starej i nowej poycji jest > 1 to :
+        if (Vector2.Distance(rect.anchoredPosition, pos) > 0.4) // jeżeli długość wektora róznicy starej i nowej poycji jest > 1 to : (jest w ruchu)
         {
             MovePositionTo(pos);    // wywołaj funkcje moveposition z parametrem pos
             updating = true;        // zwróć wartość true dla zmiennej updating
             return true;            // funkcja zwraca true
         }
-        else // jeżeli długość wektora róznicy starej i nowej poycji jest > 1 to :
+        else // jeżeli długość wektora róznicy starej i nowej poycji jest > 1 to : (nie jest w ruchu)
         {
             rect.anchoredPosition = pos;    //zachowaj pozycje
             updating = false;               // zwróć wartość false dla zmiennej updating
             return false;                   // funkcja zwraca false
         }
     }
-    public void MovePosition(Vector2 move)
-    {
-        //rect.anchoredPosition += Vector2.Lerp(rect.anchoredPosition, move, Time.deltaTime * 10f);
-        rect.anchoredPosition += move * Time.deltaTime * 15f;
-        //rect.anchoredPosition = move;
-    }
+
     public void MovePositionTo(Vector2 moveto)
     {
-        rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition,moveto,Time.deltaTime * 10f);
+        rect.anchoredPosition = Vector2.Lerp(rect.anchoredPosition, moveto, 0.05f);
     }
     public void OnPointerDown(PointerEventData eventData) //MouseButtonDown handler
     {
@@ -87,4 +82,5 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         MovePieces.instance.DropPiece(); //wywołaj funkcje droppiece
         //Debug.Log("Drop " + transform.name);
     }
+
 }

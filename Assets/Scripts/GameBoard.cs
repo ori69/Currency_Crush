@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class GameBoard : MonoBehaviour
 {
+
+    
     [Header("UI Elements")]
     public Sprite[] Orbs;
     public RectTransform gameBoard; //nie wiem ale dziala  
@@ -97,20 +99,29 @@ public class GameBoard : MonoBehaviour
     List<FlippedPieces> flipped;
     List<TilePiece> dead;
 
+    List<TilePiece> synchronizeboard;
+
 
     [HideInInspector]
     public int TotalDestroyedOrbsCounter;
     [HideInInspector]
     public int ComboCounter;
 
+    public AudioSource Herald_Shatter;
+    public AudioSource Abyssal_Explosion;
+    public bool big_oomph;
+
     // Start is called before the first frame update
     void Start()
     {
+        StartCoroutine("NextRemoveDelay");
 
         fills = new int[board_size];
         update = new List<TilePiece>();
         flipped = new List<FlippedPieces>();
         dead = new List<TilePiece>();
+
+        synchronizeboard = new List<TilePiece>();
 
         JewellerPowerUpProgress = JewellerPowerUpRequirements;
         RegretPowerUpProgress = RegretPowerUpRequirements;
@@ -145,6 +156,8 @@ public class GameBoard : MonoBehaviour
         InitializeBoard();
         VerifyBoardInitialization();
         InstantiateBoard();
+
+        big_oomph = false;
 
     }
     void InitializeBoard() //inicjalizowanie planszy
@@ -203,7 +216,7 @@ public class GameBoard : MonoBehaviour
                 rect.anchoredPosition = new Vector2(-182 + (33 * x), -181 + (33 * y));  //nie wiem ale dziala
                 orb.Initialize(val, new Point(x, y), Orbs[val]);                        //zmiana Sprite pojedynczego elementu
                 tile.SetPiece(orb);                                                     //wygeneruj element planszy - brak tej linijki powoduje wartosc null w obiekcie
-
+                synchronizeboard.Add(orb);
             }
         }
 
@@ -246,7 +259,7 @@ public class GameBoard : MonoBehaviour
                         //Debug.Log("Filling holes");
                         int newCurrencyType = RollCurrencyType();
                         TilePiece piece;// = null;
-                        Point spawnPoint = new Point(x, (board_size + fills[x]));
+                        Point spawnPoint = new Point(x, (ny + fills[x]));
 
                         if (dead.Count > 0)
                         {
@@ -272,11 +285,11 @@ public class GameBoard : MonoBehaviour
                         hole.SetPiece(piece);
                         ResetPiece(piece);
                         fills[x]++;
+                        
 
 
                         //fill the hole
                     }
-
                     break;
                 }
 
@@ -337,7 +350,11 @@ public class GameBoard : MonoBehaviour
 
         for (int i = 0; i < finishedUpdating.Count; i++)
         {
-
+            if (CheckIfBoardIsStatic())
+            {
+            //NextRemoveDelayIsReached = false;
+            //Debug.Log("Reset remove delay, state : " + NextRemoveDelayIsReached);
+            
             TilePiece piece = finishedUpdating[i];                  // utwórz zmienną typu TilePiece o wartości indeksu listy finishedupdating     
             FlippedPieces flip = GetFlipped(piece);
             TilePiece flippedPiece = null;
@@ -387,7 +404,7 @@ public class GameBoard : MonoBehaviour
             {
                 flippedPiece = flip.GetOtherPiece(piece);
                 AddPoints(ref matched, IsConnected(flippedPiece.index, true));
-                
+
             }
 
             if (matched.Count == 0) // jeżeli nie stworzone zostało dopasowanie
@@ -426,10 +443,12 @@ public class GameBoard : MonoBehaviour
                         ExaltedCooldownImage.fillAmount = ExaltedCooldown;
 
                     }
+                    /*
                     Debug.Log(JewellerCooldown);
                     Debug.Log(RegretCooldown);
                     Debug.Log(VaalCooldown);                    
                     Debug.Log(ExaltedCooldown);
+                    */
 
                     GameBoard.usedMouse = false;
                 }
@@ -555,13 +574,17 @@ public class GameBoard : MonoBehaviour
                         dead.Add(tilepiece);                    // dodaj do listy martwych elementów                
                         TotalDestroyedOrbsCounter++;            // zwieksz wynik
                         Score.text = TotalDestroyedOrbsCounter.ToString();  //zaktualizuj wynik na planszy
+                        if (big_oomph)
+                            Play_Abyssal_Explosion();
+                        else
+                            Play_Herald_Shatter();
                     }
                     tile.SetPiece(null);
                 }
 
-
                 foreach (Point pnt_sec in secondary_matched)
                 {
+
                     Tile tile = GetTileAtPoint(pnt_sec);
                     TilePiece tilepiece = tile.GetPiece();
 
@@ -632,8 +655,11 @@ public class GameBoard : MonoBehaviour
                         dead.Add(tilepiece);                    // dodaj do listy martwych elementów                
                         TotalDestroyedOrbsCounter++;            // zwieksz wynik
                         Score.text = TotalDestroyedOrbsCounter.ToString();  //zaktualizuj wynik na planszy
+                        if (ComboCounter > 15)
+                            Play_Abyssal_Explosion();
                     }
                     tile.SetPiece(null);
+
                 }
 
                 // Jewellers counters
@@ -692,8 +718,6 @@ public class GameBoard : MonoBehaviour
 
                 VaalPowerUp.value = VaalPowerUpProgress;
 
-
-
                 // end
 
                 // Exalted counters
@@ -713,19 +737,19 @@ public class GameBoard : MonoBehaviour
 
                 ExaltedPowerUp.value = ExaltedPowerUpProgress;
 
-
-
                 // end
 
 
                 ComboBreaker.text = ("+ " + ComboCounter.ToString());
 
-                ApplyGravityToBoard();
 
+
+                ApplyGravityToBoard();
             }
 
             flipped.Remove(flip); //usuń element flip po zaktualizowaniu
             update.Remove(piece);
+        }
         }
 
         JewellerPowerUpPointIndex = null;
@@ -741,7 +765,8 @@ public class GameBoard : MonoBehaviour
         }
         VaalPowerUpEvent = 666;
         ExaltedPowerUpEvent = 0;
-
+        big_oomph = false;
+       
     }
     private bool CheckFor4InLine(List<TilePiece> Currency_Match, int direction) // 0 - vertical check , 1 - horizontal check , returns true if 4 in one line
     {
@@ -802,7 +827,10 @@ public class GameBoard : MonoBehaviour
                 counter++;
         }
         if (counter >= 5)
+        {
+            big_oomph = true;
             return true;
+        }
         else
             return false;
     }
@@ -851,8 +879,6 @@ public class GameBoard : MonoBehaviour
 
                         }
                     }
-
-
 
             }
         }
@@ -1220,7 +1246,9 @@ public class GameBoard : MonoBehaviour
 
     List<Point> IsConnected(Point p, bool main_call)
     {
-        List<Point> connected = new List<Point>();
+        
+        List<Point> connected = new List<Point>(); 
+            
         int currency_type = GetCurrencyTypeAtPoint(p);
         if (currency_type == 13)
             return connected;
@@ -1278,7 +1306,6 @@ public class GameBoard : MonoBehaviour
             for (int i = 0; i < connected.Count; i++)
                 AddPoints(ref connected, IsConnected(connected[i], false));
         }//Checks for other matches along the current match
-
         return connected;
     }
 
@@ -1301,24 +1328,36 @@ public class GameBoard : MonoBehaviour
     }
 
     int RollCurrencyType()
-    {
-        int currency_type = 1;
-        int ScoreThreshold = 50;
-        if (TotalDestroyedOrbsCounter < ScoreThreshold * 2) // less than 100 pts
-        { currency_type = Mathf.CeilToInt(Random.Range(1, amount_of_currency_types - 6)); }
-        if (TotalDestroyedOrbsCounter >= ScoreThreshold * 2) // more or equal than 100 pts
-        { currency_type = Mathf.CeilToInt(Random.Range(1, amount_of_currency_types - 5)); }
-        if (TotalDestroyedOrbsCounter >= ScoreThreshold * 4) // more or equal 200 pts
-        { currency_type = Mathf.CeilToInt(Random.Range(1, amount_of_currency_types - 4)); }
-        if (TotalDestroyedOrbsCounter >= ScoreThreshold * 10) // more or equa 500 pts
-        { currency_type = Mathf.CeilToInt(Random.Range(2, amount_of_currency_types - 4)); }
-        if (TotalDestroyedOrbsCounter >= ScoreThreshold * 20) // more or equal 1000 pts
-        { currency_type = Mathf.CeilToInt(Random.Range(2, amount_of_currency_types - 3)); }
-        if (TotalDestroyedOrbsCounter >= ScoreThreshold * 30) // more or equal 1500 pts
-        { currency_type = Mathf.CeilToInt(Random.Range(3, amount_of_currency_types - 2)); }
-        if (TotalDestroyedOrbsCounter >= ScoreThreshold * 50) // more or equal 2500 pts
-        { currency_type = Mathf.CeilToInt(Random.Range(3, amount_of_currency_types - 1)); }
+    {             
+        int currency_type = Mathf.CeilToInt(Random.Range(1, amount_of_currency_types - 6)); 
+
         return currency_type;
+    }
+
+    public void Play_Herald_Shatter()
+    {
+        Herald_Shatter.PlayOneShot(Herald_Shatter.clip,0.25f); //stacking sound, sometimes goes LOUD AF
+        //Herald_Shatter.Play(); non stacking sounds
+    }
+
+    public void Play_Abyssal_Explosion()
+    {
+        Abyssal_Explosion.PlayOneShot(Abyssal_Explosion.clip,0.25f);
+    }
+
+    public bool CheckIfBoardIsStatic()
+    {
+        int counter = 0;
+        foreach (TilePiece t in synchronizeboard)
+        {
+            if (t.updating == false)
+                counter++;
+        }
+
+        if (counter == 144)
+            return true;
+        else
+            return false;
     }
 }
 

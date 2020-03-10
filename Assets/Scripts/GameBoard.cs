@@ -88,6 +88,8 @@ public class GameBoard : MonoBehaviour
 
     [Header("Prefabs")]
     public GameObject Tile_Piece; //cos z instancjonowaniem
+    public GameObject HeraldBoom;
+    public GameObject AbyssalBoom;
 
     static readonly int board_size = 12; //inicjalizacja wielkości planszy
     int[] fills;
@@ -568,14 +570,18 @@ public class GameBoard : MonoBehaviour
                     secondary_matched.AddRange(CreateSecondaryMatchList(Mirror_Of_Kalandra_Match));
 
                     if (tilepiece != null)
-                    {
-                        tilepiece.gameObject.SetActive(false);  // zamień elementy na nieaktywne
-                        dead.Add(tilepiece);                    // dodaj do listy martwych elementów                
-                        TotalDestroyedOrbsCounter++;            // zwieksz wynik
-                        Score.text = TotalDestroyedOrbsCounter.ToString();  //zaktualizuj wynik na planszy
-                        Play_Herald_Shatter();
-                    }
+                        {
+                            tilepiece.gameObject.SetActive(false);  // zamień elementy na nieaktywne
+                            dead.Add(tilepiece);                    // dodaj do listy martwych elementów                
+                            TotalDestroyedOrbsCounter++;            // zwieksz wynik
+                            Score.text = TotalDestroyedOrbsCounter.ToString();  //zaktualizuj wynik na planszy
+                        
+                            Play_Herald_Shatter();
+                            DisplayEffect(tilepiece, 0);
+                        }
+
                     tile.SetPiece(null);
+
                 }
 
                 foreach (Point pnt_sec in secondary_matched)
@@ -651,9 +657,15 @@ public class GameBoard : MonoBehaviour
                         dead.Add(tilepiece);                    // dodaj do listy martwych elementów                
                         TotalDestroyedOrbsCounter++;            // zwieksz wynik
                         Score.text = TotalDestroyedOrbsCounter.ToString();  //zaktualizuj wynik na planszy
-                        if (big_oomph)
+                            if (big_oomph)
+                            {
                                 Play_Abyssal_Explosion();
-                    }
+                                DisplayEffect(tilepiece, 1);
+                            }
+                            else
+                                DisplayEffect(tilepiece, 0);
+
+                        }
                     tile.SetPiece(null);
 
                 }
@@ -1339,6 +1351,26 @@ public class GameBoard : MonoBehaviour
         Abyssal_Explosion.PlayOneShot(Abyssal_Explosion.clip,0.13f);
     }
 
+    public void DisplayEffect(TilePiece tilepiece,int version)
+    {
+        if (version == 0) //Herald Of Ice
+        { 
+            Point p = tilepiece.index;
+            GameObject explosion = Instantiate(HeraldBoom, gameBoard);
+            RectTransform explosion_rect = explosion.GetComponent<RectTransform>();
+            explosion_rect.anchoredPosition = new Vector2(-182 + (33 * p.x), -181 + (33 * p.y));
+            Destroy(explosion.gameObject, 0.5f); 
+        }
+
+        if (version == 1) //Abyssal Boom
+        {
+            Point p = tilepiece.index;
+            GameObject explosion = Instantiate(AbyssalBoom, gameBoard);
+            RectTransform explosion_rect = explosion.GetComponent<RectTransform>();
+            explosion_rect.anchoredPosition = new Vector2(-182 + (33 * p.x), -181 + (33 * p.y));
+            Destroy(explosion.gameObject, 0.5f);
+        }
+    }
     public bool CheckIfBoardIsStatic()
     {
         int counter = 0;

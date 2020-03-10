@@ -3,7 +3,32 @@ guid: b1d31a4f03a1dc24c89e0ca98fec2bc3
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - gameBoard: {instanceID: 0}
+  - Score: {instanceID: 0}
+  - ComboBreaker: {instanceID: 0}
+  - JewellerButton: {instanceID: 0}
+  - JewellerPowerUp: {instanceID: 0}
+  - JewellerPowerUpsAmountText: {instanceID: 0}
+  - JewellerCooldownImage: {instanceID: 0}
+  - RegretButton: {instanceID: 0}
+  - RegretPowerUp: {instanceID: 0}
+  - RegretPowerUpsAmountText: {instanceID: 0}
+  - RegretCooldownImage: {instanceID: 0}
+  - VaalButton: {instanceID: 0}
+  - VaalPowerUp: {instanceID: 0}
+  - VaalPowerUpsAmountText: {instanceID: 0}
+  - VaalCooldownImage: {instanceID: 0}
+  - ExaltedButton: {instanceID: 0}
+  - ExaltedPowerUp: {instanceID: 0}
+  - ExaltedPowerUpsAmountText: {instanceID: 0}
+  - ExaltedCooldownImage: {instanceID: 0}
+  - Tile_Piece: {instanceID: 0}
+  - HeraldBoom: {fileID: 3572085029792750086, guid: 4d47cc347a5faf3438d1ce5bae20a594,
+      type: 3}
+  - AbyssalBoom: {instanceID: 0}
+  - Herald_Shatter: {instanceID: 0}
+  - Abyssal_Explosion: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

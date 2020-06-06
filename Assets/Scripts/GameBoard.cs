@@ -18,7 +18,7 @@ public class GameBoard : MonoBehaviour
     public bool RNG_Viewer_ON = false;
     public Button ButtonRNG_View;
     public Text[] probabilities_display = new Text[13];
-
+    public LevelSystem lvl;    
     #endregion
 
     #region PowerUps
@@ -51,7 +51,6 @@ public class GameBoard : MonoBehaviour
     int RegretPowerUpProgress;
     [HideInInspector]
     int RegretPowerUpsAmount;
-    List<Tile> RegretIndexList;
     [HideInInspector] 
     public float RegretCooldown;
 
@@ -127,8 +126,8 @@ public class GameBoard : MonoBehaviour
     public Text matched_log;
     public Text secondary_matched_log;
     public Text finishedupdating_log;
-    public bool DEBUG = true;
-
+    public bool DEBUG;
+    public bool HAX;
     [HideInInspector]
     public int TotalDestroyedOrbsCounter;
     [HideInInspector]
@@ -140,6 +139,8 @@ public class GameBoard : MonoBehaviour
     [Header("Audio And Effects")]
     public AudioSource Herald_Shatter;
     public AudioSource Abyssal_Explosion;
+    public int Sound_Count_Herald;
+    public int Sound_Count_Abyssal;
     public bool big_oomph;
     #endregion
 
@@ -148,8 +149,11 @@ public class GameBoard : MonoBehaviour
     void Start()
     {
 
-        spawnweight = new float[] { 0, 1914, 1842, 1757, 1897, 1800, 1000, 0, 0, 0, 0, 0, 0 }; // Trying to keeping sum of all elements in this array at 10000 means weight 1 = 0,01%
-                                                                                             // !!!! First element spawnweight[0] MUST BE = 0 !!!!!
+        spawnweight = new float[] { 0, 1800, 1800, 1800, 1800, 1800, 1000, 0, 0, 0, 0, 0, 0 }; // Trying to keeping sum of all elements in this array at 10000 means weight 1 = 0,01%
+                                                                                               // !!!! First element spawnweight[0] MUST BE = 0 !!!!!
+        DEBUG = false;
+        HAX = false;
+
         fills = new int[board_size];
         update = new List<TilePiece>();
         flipped = new List<FlippedPieces>();
@@ -169,8 +173,7 @@ public class GameBoard : MonoBehaviour
         JewellerPowerUpPointIndex = null;
         VaalPowerUpIndexes = new List<Point>();
         ExaltedPowerUpIndexes = new List<Point>();
-        RegretIndexList = new List<Tile>();
-
+        
         JewellerCooldown = 1;
         JewellerCooldownImage.fillAmount = JewellerCooldown;
 
@@ -183,7 +186,9 @@ public class GameBoard : MonoBehaviour
         ExaltedCooldown = 1;
         ExaltedCooldownImage.fillAmount = ExaltedCooldown;
 
-        
+        Sound_Count_Herald = 0;         // Counters for reducing earrape during sound stacking
+        Sound_Count_Abyssal = 0;        // Counters for reducing earrape during sound stacking
+        StartCoroutine("RevertVolume"); // This is time intervaled coroutine to revert sound volume after stacking
 
         InitializeBoard();
         VerifyBoardInitialization();
@@ -196,6 +201,16 @@ public class GameBoard : MonoBehaviour
     void Update()
     {
         #region 0. Keybind / Debug Handling
+
+        #region Shortcuts
+        if (Input.GetKeyDown("f2")) HAX = !HAX;
+        
+        if (HAX && Input.GetKeyDown("e") && CheckIfBoardIsStatic()) PowerUp_Exalted_Shortcut();
+        if (HAX && Input.GetKeyDown("v") && CheckIfBoardIsStatic()) PowerUp_VaalOrb_ShortCut();
+        if (HAX && Input.GetKeyDown("l")) lvl.Exp = lvl.ExpBar.maxValue;
+        if (HAX && Input.GetKeyDown("r")) RerollBoard();
+
+        #endregion
 
         #region Debug view toggle
 
@@ -214,6 +229,7 @@ public class GameBoard : MonoBehaviour
             pos.anchoredPosition = new Vector2(550, 0);
             Lists_Checkup.SetActive(true);
         }           // activate view of debugger if DEBUG = true
+                      
 
         #endregion
 
@@ -523,7 +539,7 @@ public class GameBoard : MonoBehaviour
                             DeactivatePiece(tilepiece);                                                
                         }
 
-                        tile.SetPiece(null);        // wat?? gotta inspect this further
+                        tile.SetPiece(null);  
 
                     }
 
@@ -960,6 +976,7 @@ public class GameBoard : MonoBehaviour
         tilepiece.gameObject.SetActive(false);                              // deactivate piece, so it does not render
         TotalDestroyedOrbsCounter++;                                        // increase score
         Score.text = TotalDestroyedOrbsCounter.ToString();                  // update score on board
+        lvl.Exp++;                                                          // increase exp
 
     }
     public void ApplyGravityToBoard()
@@ -1158,14 +1175,13 @@ public class GameBoard : MonoBehaviour
 #endregion
 
 #region PowerUpFunctions
+
     public void PowerUp_Regret()
     {
         if (RegretPowerUpsAmount >= 1 && RegretCooldown <= 0)
         {
-            DestroyBoard();
-            InitializeBoard();
-            VerifyBoardInitialization();
-            InstantiateBoard();
+
+            RerollBoard();                       
 
             RegretPowerUpsAmount--;
             RegretCooldown = 1;
@@ -1291,7 +1307,7 @@ public class GameBoard : MonoBehaviour
 
                         if (direction == 1)
                         {
-                            int choose_x = Mathf.CeilToInt(Random.Range(0, board_size - 1));
+                            int choose_x = Mathf.CeilToInt(Random.Range(0, board_size - 2));
                             for (int y = 0; y < board_size; y++)
                             {
                                 Point p1 = new Point(choose_x, y);
@@ -1336,7 +1352,128 @@ public class GameBoard : MonoBehaviour
         VaalButton.enabled = false;
         VaalButton.enabled = true;
     }
+    public void PowerUp_VaalOrb_ShortCut()
+    {
+        
+        ComboCounter = 0;
+        ComboBreaker.text = (ComboCounter.ToString());
 
+        int selectedevent = Mathf.CeilToInt(Random.Range(0, 100));
+
+        if (selectedevent >= 0 && selectedevent < 25)
+            selectedevent = 0;
+
+        if (selectedevent >= 25 && selectedevent < 50)
+            selectedevent = 1;
+
+        if (selectedevent >= 50 && selectedevent < 75)
+            selectedevent = 2;
+
+        if (selectedevent >= 75 && selectedevent < 100)
+            selectedevent = 3;
+
+        Debug.Log("Selected event :" + selectedevent);
+
+        VaalPowerUpEvent = selectedevent;
+
+        switch (selectedevent)
+        {
+            case 0: // random destruction select two pieces of the type and remove them from board
+                {
+                    Debug.Log("Executing event :" + selectedevent);
+                    VaalPowerUpEvent = 0;
+
+                    List<Point> selected_to_be_rekt = new List<Point>();
+
+                    int SelectedCurrencyType1 = RollCurrencyType();
+                    int SelectedCurrencyType2 = RollCurrencyType();
+
+                    while (SelectedCurrencyType1 == SelectedCurrencyType2)
+                    {
+                        SelectedCurrencyType2 = RollCurrencyType();
+                    }
+
+                    for (int x = 0; x < board_size; x++)
+                    {
+                        for (int y = 0; y < board_size; y++)
+                        {
+                            Point p = new Point(x, y);
+                            Tile t = GetTileAtPoint(p);
+                            if (t.currency_type == SelectedCurrencyType1 || t.currency_type == SelectedCurrencyType2)
+                                selected_to_be_rekt.Add(p);
+                        }
+                    }
+
+
+                    Debug.Log("Removed pieces : " + selected_to_be_rekt.Count);
+                    VaalPowerUpIndexes.AddRange(selected_to_be_rekt);
+                    break;
+                }
+
+            case 1: // select horizontal or vertical, then choose 
+                {
+                    int choose_direction = Mathf.CeilToInt(Random.Range(0, 100));
+                    var direction = (choose_direction >= 50) ? 0 : 1; // 0 - horizontal , 1 - vertical
+                    if (direction == 0)
+                    {
+                        int choose_y = Mathf.CeilToInt(Random.Range(0, board_size - 2));
+
+                        for (int x = 0; x < board_size; x++)
+                        {
+                            Point p1 = new Point(x, choose_y);
+                            Point p2 = new Point(x, choose_y + 1);
+                            Point p3 = new Point(x, choose_y + 2);
+
+                            if (GetTileAtPoint(p1).currency_type != 13)     //destroy only if not corrupted
+                                VaalPowerUpIndexes.Add(p1);
+
+                            if (GetTileAtPoint(p2).currency_type != 13)     //destroy only if not corrupted
+                                VaalPowerUpIndexes.Add(p2);
+
+                            if (GetTileAtPoint(p2).currency_type != 13)     //destroy only if not corrupted
+                                VaalPowerUpIndexes.Add(p3);
+                        }
+                    }// go horizontal
+
+                    if (direction == 1)
+                    {
+                        int choose_x = Mathf.CeilToInt(Random.Range(0, board_size - 2));
+                        for (int y = 0; y < board_size; y++)
+                        {
+                            Point p1 = new Point(choose_x, y);
+                            Point p2 = new Point(choose_x + 1, y);
+                            Point p3 = new Point(choose_x + 2, y);
+
+                            if (GetTileAtPoint(p1).currency_type != 13)     //destroy only if not corrupted
+                                VaalPowerUpIndexes.Add(p1);
+
+                            if (GetTileAtPoint(p2).currency_type != 13)     //destroy only if not corrupted
+                                VaalPowerUpIndexes.Add(p2);
+
+                            if (GetTileAtPoint(p2).currency_type != 13)     //destroy only if not corrupted
+                                VaalPowerUpIndexes.Add(p3);
+                        }
+                    }// go vertical
+
+                    break;
+                }
+
+            case 2:
+                {
+                    CorruptBoard();
+                    break;
+                }
+
+            case 3:
+                {
+                    break;
+                }
+
+        }
+
+        Debug.Log("Vaal orb selected event: " + selectedevent);
+        
+    }
     public void PowerUp_Exalted()
     {
         if (ExaltedPowerUpsAmount >= 1 && ExaltedCooldown  <= 0)
@@ -1392,23 +1529,103 @@ public class GameBoard : MonoBehaviour
         ExaltedButton.enabled = true;
     }
 
-#region PowerUpSubFunctions
-
-    void DestroyBoard() //zniszczenie planszy
+    public void PowerUp_Exalted_Shortcut()
     {
-        for (int x = 0; x < board_size; x++) //podwojny for - obsluga matrycy 2D
-        {
-            for (int y = 0; y < board_size; y++) //podwojny for - obsluga matrycy 2D
-            {
-                Tile tile = GetTileAtPoint(new Point(x, y));
-                TilePiece tilepiece = tile.GetPiece();
-                RegretIndexList.Add(tile);
+        
+            ComboCounter = 0;
+            ComboBreaker.text = (ComboCounter.ToString());
+         
+            Debug.Log("Executing event : Exalted orb");
+            ExaltedPowerUpEvent = 1;
 
-                tilepiece.gameObject.SetActive(false);
-                Destroy(tilepiece.gameObject);
+            List<Point> available = new List<Point>();
+            List<Point> selected_to_be_rekt = new List<Point>();
+
+            for (int x = 0; x < board_size; x++) //podwojny for - obsluga matrycy 2D
+            {
+                for (int y = 0; y < board_size; y++) //podwojny for - obsluga matrycy 2D
+                {
+
+                    Point p = new Point(x, y);
+                    Tile tile = GetTileAtPoint(p);
+                    if (tile.currency_type != 13)
+                    {
+                        available.Add(p);
+                    }
+                }
+            }
+            Debug.Log("Available : " + available.Count);
+            int NewCounter = available.Count / 2;
+
+            for (int z = 0; z < NewCounter; z++)
+            {
+                int selected = Mathf.CeilToInt(Random.Range(0, available.Count));   // select number from list position
+                Point p = available[selected];                                      // create point from selected number
+                selected_to_be_rekt.Add(p);                                         // add selected point to selected list
+                available.Remove(p);                                                // remove same point from available list to avoid removing same piece twice
 
             }
+
+            Debug.Log("Removed pieces : " + selected_to_be_rekt.Count);
+            ExaltedPowerUpIndexes.AddRange(selected_to_be_rekt);        
+
+    }
+#region PowerUpSubFunctions
+
+    void RerollBoard()
+    {
+
+        #region 1. Reroll
+
+        for (int x = 0; x < board_size; x++)     
+        {
+            for (int y = 0; y < board_size; y++) 
+            {
+                Point p = new Point(x, y);
+                Tile t = GetTileAtPoint(p);
+                int c = RollCurrencyType();
+                if (t.currency_type != 13)
+                {
+                    Tile tile = GetTileAtPoint(p);
+                    TilePiece tilepiece = tile.GetPiece();
+                    tilepiece.Initialize(c, p, Orbs[c]);
+                    tile.SetPiece(tilepiece);
+                }
+            }
         }
+
+        #endregion
+
+        #region 2. Verify board + Reroll if needed
+
+        List<int> toreroll;
+
+        for (int x = 0; x < board_size; x++)        
+        {
+            for (int y = 0; y < board_size; y++)    
+            {
+                Point p = new Point(x, y);
+                int val; // = GetCurrencyTypeAtPoint(p);
+
+                toreroll = new List<int>();
+                while (IsConnected(p, true).Count > 0)      // as long as there are connected pieces in rerolled board :
+                {
+                    int c = GetCurrencyTypeAtPoint(p);
+                    if (!toreroll.Contains(c))
+                        toreroll.Add(c);
+
+                    // reroll piece
+                    c = RollCurrencyType();
+                    Tile tile = GetTileAtPoint(p);
+                    TilePiece tilepiece = tile.GetPiece();
+                    tilepiece.Initialize(c, p, Orbs[c]);
+                    tile.SetPiece(tilepiece);
+                }
+            }
+        }
+
+        #endregion
+
     }
 
     void CorruptBoard() // corrupt random 3x3 area on board
@@ -1443,11 +1660,11 @@ public class GameBoard : MonoBehaviour
 
             tile = GetTileAtPoint(p);
             int val = 13;
-            GameObject t = Instantiate(Tile_Piece, gameBoard);                      //zinstancjonowanie nowego GameObject na podstawie oryginału
+            GameObject t = Instantiate(Tile_Piece, gameBoard);                          //zinstancjonowanie nowego GameObject na podstawie oryginału
             TilePiece orb = t.GetComponent<TilePiece>();
-            RectTransform rect = t.GetComponent<RectTransform>();                   //nie wiem ale dziala
+            RectTransform rect = t.GetComponent<RectTransform>();                       //nie wiem ale dziala
             rect.anchoredPosition = new Vector2(-182 + (33 * p.x), -181 + (33 * p.y));  //nie wiem ale dziala
-            orb.Initialize(val, p, Orbs[val]);                        //zmiana Sprite pojedynczego elementu
+            orb.Initialize(val, p, Orbs[val]);                                          //zmiana Sprite pojedynczego elementu
             tile.SetPiece(orb);
         } //change pieces to corrupted tile
 
@@ -1463,12 +1680,27 @@ public class GameBoard : MonoBehaviour
 
     public void Play_Herald_Shatter()
     {
-        Herald_Shatter.PlayOneShot(Herald_Shatter.clip, 0.18f); //stacking sound, sometimes goes LOUD AF
+        //Sound_Count_Herald = 1;
+        Sound_Count_Herald++; 
+        Herald_Shatter.PlayOneShot(Herald_Shatter.clip, 0.20f / Sound_Count_Herald); //stacking sound, each time it repeats plays more quietly to avoid earrape
         //Herald_Shatter.Play(); non stacking sounds
     }
     public void Play_Abyssal_Explosion()
     {
-        Abyssal_Explosion.PlayOneShot(Abyssal_Explosion.clip, 0.13f);
+        //Sound_Count_Abyssal = 1;
+        Sound_Count_Abyssal++;
+        Abyssal_Explosion.PlayOneShot(Abyssal_Explosion.clip, 0.20f / Sound_Count_Abyssal);
+    }
+
+    IEnumerator RevertVolume()
+    {
+        for (; ; )
+        {
+            if (Sound_Count_Herald > 0) Sound_Count_Herald--;
+            if (Sound_Count_Abyssal > 0) Sound_Count_Abyssal--;     
+            yield return new WaitForSeconds(0.005f);                 // wait for 10 ms until next coroutine execution
+        }
+    
     }
     public void DisplayEffect(TilePiece tilepiece, int version)
     {
@@ -1503,6 +1735,7 @@ public class GameBoard : MonoBehaviour
     }
     Tile GetTileAtPoint(Point p)
     {
+        if (p.x > 11 || p.y > 11) Debug.Log("OUT OF ARRAY BOUNDS : " + p.x + "," + p.y);
         return Tile[p.x, p.y];
     }
     int GetCurrencyTypeAtPoint(Point p)
@@ -1616,85 +1849,7 @@ private int RollCurrencyType()
         #endregion
 
         #region F. Pick currency type based on roll
-        /*
-        OLD CODE
-        if(weightroll <= spawnweight[1])
-        {
-            currency_type = 1; // Roll Alteration orb
-            return currency_type;
-        }
-
-        if(weightroll <= (spawnweight[1] + spawnweight[2]) 
-        && weightroll > spawnweight[1])
-        {
-            currency_type = 2; // Roll Jeweller Orb
-            return currency_type;
-        }
-
-        if(weightroll <= (spawnweight[1] + spawnweight[2] + spawnweight[3])
-        && weightroll > (spawnweight[1] + spawnweight[2]))
-        {
-            currency_type = 3; // Roll Chromatic Orb
-            return currency_type;
-        }
-
-        if(weightroll <= (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4]) 
-        && weightroll > (spawnweight[1] + spawnweight[2] + spawnweight[3]))
-        {
-            currency_type = 4; // Roll Alchemy Orb
-            return currency_type;
-        }
-
-        if (weightroll <= (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4] + spawnweight[5])
-        && weightroll > (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4]))
-        {
-            currency_type = 5; // Roll Orb of Fusing
-            return currency_type;
-        }
-
-        if(weightroll <= (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4] + spawnweight[5] + spawnweight[6])
-        && weightroll > (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4] + spawnweight[5]))
-        {
-            currency_type = 6; // Roll Regal Orb
-            return currency_type;
-        }
-
-        if(weightroll <= (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4] + spawnweight[5] + spawnweight[6] + spawnweight[7])
-        && weightroll > (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4] + spawnweight[5] + spawnweight[6]))
-        {
-            currency_type = 7; // Roll Orb Of Regret
-            return currency_type;
-        }
-
-        if (weightroll <= (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4] + spawnweight[5] + spawnweight[6] + spawnweight[7] + spawnweight[8])
-        && weightroll > (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4] + spawnweight[5] + spawnweight[6] + spawnweight[7]))
-        {
-            currency_type = 8; // Roll Vaal Orb
-            return currency_type;
-        }
-
-        if (weightroll <= (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4] + spawnweight[5] + spawnweight[6] + spawnweight[7] + spawnweight[8] + spawnweight[9])
-        && weightroll > (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4] + spawnweight[5] + spawnweight[6] + spawnweight[7] + spawnweight[8]))
-        {
-            currency_type = 9; // Roll Chaos Orb
-            return currency_type;
-        }
-
-        if (weightroll <= (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4] + spawnweight[5] + spawnweight[6] + spawnweight[7] + spawnweight[8] + spawnweight[9] + spawnweight[10])
-        && weightroll > (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4] + spawnweight[5] + spawnweight[6] + spawnweight[7] + spawnweight[8] + spawnweight[9]))
-        {
-            currency_type = 10; // Roll Divine Orb
-            return currency_type;
-        }
-
-        if (weightroll <= (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4] + spawnweight[5] + spawnweight[6] + spawnweight[7] + spawnweight[8] + spawnweight[9] + spawnweight[10] + spawnweight[11])
-        && weightroll > (spawnweight[1] + spawnweight[2] + spawnweight[3] + spawnweight[4] + spawnweight[5] + spawnweight[6] + spawnweight[7] + spawnweight[8] + spawnweight[9] + spawnweight[10]))
-        {
-            currency_type = 11; // Roll Exalted Orb
-            return currency_type;
-        }
-
-        */
+        
         #endregion
 
         #region 3. Pick currency type based on roll v.2

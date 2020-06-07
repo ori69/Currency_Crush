@@ -8,7 +8,6 @@ public class LevelSystem : MonoBehaviour
     public Slider ExpBar;    
     public Text LevelCounter;
     public AudioSource LevelUpSound;
-    public GameBoard board;
 
     public int Level;
     public float Exp;
@@ -71,7 +70,7 @@ public class LevelSystem : MonoBehaviour
             {
                 for (int i = 1; i <= 12; i++)
                 {
-                    board.spawnweight[i] += Milestone1[i];
+                    GameBoard.spawnweight[i] += Milestone1[i];
                 }
                 break;
             }
@@ -80,7 +79,7 @@ public class LevelSystem : MonoBehaviour
             {
                 for (int i = 1; i <= 12; i++)
                 {
-                    board.spawnweight[i] += Milestone2[i];
+                    GameBoard.spawnweight[i] += Milestone2[i];
                 }
                 break;
             }
@@ -89,7 +88,7 @@ public class LevelSystem : MonoBehaviour
             {
                 for (int i = 1; i <= 12; i++)
                 {
-                    board.spawnweight[i] += Milestone3[i];
+                    GameBoard.spawnweight[i] += Milestone3[i];
                 }
                 break;
             }
@@ -98,7 +97,7 @@ public class LevelSystem : MonoBehaviour
             {
                 for (int i = 1; i <= 12; i++)
                 {
-                    board.spawnweight[i] += Milestone4[i];
+                    GameBoard.spawnweight[i] += Milestone4[i];
                 }
                 break;
             }
@@ -107,7 +106,7 @@ public class LevelSystem : MonoBehaviour
             {
                 for (int i = 1; i <= 12; i++)
                 {
-                    board.spawnweight[i] += Milestone5[i];
+                    GameBoard.spawnweight[i] += Milestone5[i];
                 }
                 break;
             }
@@ -116,7 +115,7 @@ public class LevelSystem : MonoBehaviour
             {
                 for (int i = 1; i <= 12; i++)
                 {
-                    board.spawnweight[i] += Milestone6[i];
+                    GameBoard.spawnweight[i] += Milestone6[i];
                 }
                 break;
             }

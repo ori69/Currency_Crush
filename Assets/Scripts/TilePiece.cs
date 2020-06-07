@@ -6,23 +6,41 @@ using UnityEngine.EventSystems;
 
 public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
 {
-    public int currency_type;   //0 - x -> ta wartosc odpowiada za rodzaj currency
+    public int currency_type;   // 0 - x -> ta wartosc odpowiada za rodzaj currency
     public Point index;
     public bool updating;
     Image img;
 
     [HideInInspector]
-    public Vector2 pos;     //vector of destination
+    public Vector2 pos;         // vector of destination
     [HideInInspector]
-    public RectTransform rect;
-
-    
+    public RectTransform rect;    
 
     private Vector2 velocity;                    // speed vector of falling element
     private Vector2 move_direction;              // direction related vector
     private readonly float a = 0.45f;            // artificial gravitation acceleration constant. Subject to change if needed.
     private readonly float eps = 10f;            // "snapping constant" used to check if moving element is in required approximation. Subject to change if needed.
-    
+
+    public void Update()                        // for debug updates
+    {
+        if (!GameBoard.DEBUG)
+        { 
+            img.color = new Color(1, 1, 1, 1); 
+            return;
+        }
+
+        if (GameBoard.DEBUG && !updating) 
+        { 
+            img.color = new Color(0, 1, 0, 1); 
+            return; 
+        }
+
+        if (GameBoard.DEBUG && updating)
+        { 
+            img.color = new Color(1, 0, 0, 1); 
+            return; 
+        }           
+    }
     public void Initialize(int v, Point p, Sprite orb)
     {
         img = GetComponent<Image>();
@@ -90,7 +108,7 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     }
     public void OnPointerDown(PointerEventData eventData) //MouseButtonDown handler
     {
-        if (updating) return;
+        if (!GameBoard.CheckIfBoardIsStatic()) return;
         
         if (GameBoard.UsingJeweller) // check if jewller's powerup is in use
         {

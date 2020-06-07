@@ -107,7 +107,7 @@ public class GameBoard : MonoBehaviour
 
     private readonly Point dead_bin = new Point(12, 11);    // create dummy point to store dead pieces
 
-    public float[] spawnweight;                               // create array of weights of elements for spawn chance manipulation
+    public static float[] spawnweight;                               // create array of weights of elements for spawn chance manipulation
     
     #endregion
 
@@ -115,7 +115,7 @@ public class GameBoard : MonoBehaviour
     List<TilePiece> update;
     List<FlippedPieces> flipped;
     List<TilePiece> dead;
-    List<TilePiece> synchronizeboard;
+    static List<TilePiece> synchronizeboard;
 
     [Header("Debug Mode")]
     public GameObject Lists_Checkup;  
@@ -126,8 +126,8 @@ public class GameBoard : MonoBehaviour
     public Text matched_log;
     public Text secondary_matched_log;
     public Text finishedupdating_log;
-    public bool DEBUG;
-    public bool HAX;
+    public static bool DEBUG;
+    public static bool HAX;
     [HideInInspector]
     public int TotalDestroyedOrbsCounter;
     [HideInInspector]
@@ -229,9 +229,11 @@ public class GameBoard : MonoBehaviour
             pos.anchoredPosition = new Vector2(550, 0);
             Lists_Checkup.SetActive(true);
         }           // activate view of debugger if DEBUG = true
-                      
-
+             
         #endregion
+
+
+        // Keybinds / buttons
 
         #region RNG Viewer toggle
 
@@ -884,7 +886,7 @@ public class GameBoard : MonoBehaviour
         }
         else return false;
     }
-    public bool CheckIfBoardIsStatic()
+    public static bool CheckIfBoardIsStatic()
     {
         int counter = 0;
         foreach (TilePiece t in synchronizeboard)

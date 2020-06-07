@@ -6,7 +6,7 @@ using UnityEngine.SceneManagement;
 
 public class SceneSwitcher : MonoBehaviour
 {
-    public void ExitGame()
+    public void ExitGame() // not used in web bild
     {
         Debug.Log("Player has quit the game");
         Application.Quit();

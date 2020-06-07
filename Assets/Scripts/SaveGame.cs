@@ -8,6 +8,8 @@ public class SaveGame : MonoBehaviour
     {
         string prefix = "CC ";
         string tosave; // used to set string in save        
+        tosave = "Exists";
+        PlayerPrefs.SetInt(tosave, 1);
 
         #region 1. Boardstate
 

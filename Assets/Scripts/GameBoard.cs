@@ -207,46 +207,48 @@ public class GameBoard : MonoBehaviour
         if (_LOADEDGAME)
         {
             LoadGame.Load();
-
-            // EVEN AFTER USING LOAD FUNCTION, CURRENCY TYPES NEED TO BE SWITCHED MANUALLY
-
-            for (int x = 0; x < GameBoard.board_size; x++)
+            if (PlayerPrefs.GetInt("Exists") == 1) // just in case someone started with Continue...
             {
-                for (int y = 0; y < GameBoard.board_size; y++)
+                // EVEN AFTER USING LOAD FUNCTION, CURRENCY TYPES NEED TO BE SWITCHED MANUALLY
+
+                for (int x = 0; x < GameBoard.board_size; x++)
                 {
-                    Point p = new Point(x, y);
-                    int c = LoadCurrency[x, y];
-                    Tile Load_Tile = GetTileAtPoint(p);
-                    TilePiece Load_Tilepiece = Load_Tile.GetPiece();
-                    Load_Tilepiece.Initialize(c, p, Orbs[c]);
-                    Load_Tile.SetPiece(Load_Tilepiece);
+                    for (int y = 0; y < GameBoard.board_size; y++)
+                    {
+                        Point p = new Point(x, y);
+                        int c = LoadCurrency[x, y];
+                        Tile Load_Tile = GetTileAtPoint(p);
+                        TilePiece Load_Tilepiece = Load_Tile.GetPiece();
+                        Load_Tilepiece.Initialize(c, p, Orbs[c]);
+                        Load_Tile.SetPiece(Load_Tilepiece);
+                    }
                 }
+
+                Score.text = TotalDestroyedOrbsCounter.ToString();
+                ComboBreaker.text = "+ " + ComboCounter.ToString();
+
+                #region Load powerups
+
+                if (JewellerPowerUpsAmount > 0) JewellerPowerUpsAmountText.text = (JewellerPowerUpsAmount.ToString());
+                JewellerPowerUp.value = JewellerPowerUpProgress;
+                JewellerCooldownImage.fillAmount = JewellerCooldown;
+
+                if (VaalPowerUpsAmount > 0) VaalPowerUpsAmountText.text = (VaalPowerUpsAmount.ToString());
+                VaalPowerUp.value = VaalPowerUpProgress;
+                VaalCooldownImage.fillAmount = VaalCooldown;
+
+                if (RegretPowerUpsAmount > 0) RegretPowerUpsAmountText.text = (RegretPowerUpsAmount.ToString());
+                RegretPowerUp.value = RegretPowerUpProgress;
+                RegretCooldownImage.fillAmount = RegretCooldown;
+
+                if (ExaltedPowerUpsAmount > 0) ExaltedPowerUpsAmountText.text = (ExaltedPowerUpsAmount.ToString());
+                ExaltedPowerUp.value = ExaltedPowerUpProgress;
+                ExaltedCooldownImage.fillAmount = ExaltedCooldown;
+
+                #endregion
+
+                _LOADEDGAME = false;
             }
-
-            Score.text = TotalDestroyedOrbsCounter.ToString();
-            ComboBreaker.text = "+ " + ComboCounter.ToString();
-
-            #region Load powerups
-
-            if (JewellerPowerUpsAmount > 0) JewellerPowerUpsAmountText.text = (JewellerPowerUpsAmount.ToString());   
-            JewellerPowerUp.value = JewellerPowerUpProgress;
-            JewellerCooldownImage.fillAmount = JewellerCooldown;
-
-            if (VaalPowerUpsAmount > 0) VaalPowerUpsAmountText.text = (VaalPowerUpsAmount.ToString());
-            VaalPowerUp.value = VaalPowerUpProgress;
-            VaalCooldownImage.fillAmount = VaalCooldown;
-
-            if (RegretPowerUpsAmount > 0) RegretPowerUpsAmountText.text = (RegretPowerUpsAmount.ToString());
-            RegretPowerUp.value = RegretPowerUpProgress;
-            RegretCooldownImage.fillAmount = RegretCooldown;
-
-            if (ExaltedPowerUpsAmount > 0) ExaltedPowerUpsAmountText.text = (ExaltedPowerUpsAmount.ToString());
-            ExaltedPowerUp.value = ExaltedPowerUpProgress;
-            ExaltedCooldownImage.fillAmount = ExaltedCooldown;
-
-            #endregion
-
-            _LOADEDGAME = false;
         }
 
         #endregion
@@ -258,11 +260,11 @@ public class GameBoard : MonoBehaviour
         #region 0. Keybind / Debug Handling
 
         #region Shortcuts
-        if (Input.GetKeyDown("f2")) HAX = !HAX;
+        //if (Input.GetKeyDown("f2")) HAX = !HAX;
         
-        if (HAX && Input.GetKeyDown("e") && CheckIfBoardIsStatic()) PowerUp_Exalted_Shortcut();
-        if (HAX && Input.GetKeyDown("v") && CheckIfBoardIsStatic()) PowerUp_VaalOrb_ShortCut();
-        if (HAX && Input.GetKeyDown("r")) RerollBoard();
+        //if (HAX && Input.GetKeyDown("e") && CheckIfBoardIsStatic()) PowerUp_Exalted_Shortcut();
+        //if (HAX && Input.GetKeyDown("v") && CheckIfBoardIsStatic()) PowerUp_VaalOrb_ShortCut();
+        //if (HAX && Input.GetKeyDown("r")) RerollBoard();
 
         #endregion
 

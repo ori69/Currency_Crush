@@ -21,13 +21,14 @@ public class SceneSwitcher : MonoBehaviour
 
     public void NewGame()
     {
+        GameBoard.LOADEDGAME = false;
         Debug.Log("Player started new game ");
         SceneManager.LoadScene("Game");
     }
 
     public void ContinueGame()
     {
-        GameBoard._LOADEDGAME = true;
+        GameBoard.LOADEDGAME = true;
         Debug.Log("Player continued game");
         SceneManager.LoadScene("Game");
     }

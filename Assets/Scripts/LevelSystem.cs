@@ -31,7 +31,12 @@ public class LevelSystem : MonoBehaviour
 
     void Start()
     {
-        if (Level > 1) { LevelCounter.text = Level.ToString(); return; }
+        if (GameBoard.LOADEDGAME) 
+        {
+            ExpBar.maxValue = NextLvl;
+            LevelCounter.text = Level.ToString(); 
+            return; 
+        }
 
         else
         {

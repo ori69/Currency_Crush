@@ -20,7 +20,7 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     private Vector2 velocity;                    // speed vector of falling element
     private Vector2 move_direction;              // direction related vector
     private readonly float a = 0.45f;            // artificial gravitation acceleration constant. Subject to change if needed.
-    private readonly float eps = 10f;            // "snapping constant" used to check if moving element is in required approximation. Subject to change if needed.
+    private readonly float eps = 12f;            // "snapping constant" used to check if moving element is in required approximation. Subject to change if needed.
 
     public void Update()                        // for debug updates
     {
@@ -69,7 +69,7 @@ public class TilePiece : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     } //Tworzenie nazwy obiektu w grze
     public bool UpdatePiece() // funkcja zwracająca true jeżeli element jest w ruchu i false jeżeli jest w miejscu
     {
-        if (Vector2.Distance(rect.anchoredPosition, pos) > eps) // jeżeli długość wektora róznicy starej i nowej poycji jest > 1 to : (jest w ruchu)
+        if (Vector2.Distance(rect.anchoredPosition, pos) > eps) // jeżeli długość wektora róznicy starej i nowej poycji jest > eps to : (jest w ruchu)
         {
             GravityInterpolation(pos);  // wywołaj funkcje moveposition z parametrem pos
             updating = true;            // return yrue for updating -> piece is moving

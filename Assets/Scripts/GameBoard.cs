@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class GameBoard : MonoBehaviour
 {
-    public static bool _LOADEDGAME;
+    public static bool LOADEDGAME;
 
     #region Initialization_of_components
 
@@ -171,6 +171,11 @@ public class GameBoard : MonoBehaviour
         VaalPowerUpProgress = VaalPowerUpRequirements;
         ExaltedPowerUpProgress = ExaltedPowerUpRequirements;
 
+        JewellerPowerUpsAmount = 0;
+        RegretPowerUpsAmount = 0;
+        VaalPowerUpsAmount = 0;
+        ExaltedPowerUpsAmount = 0;
+
         JewellerButton.enabled = false;
         RegretButton.enabled = false;
         VaalButton.enabled = false;
@@ -202,53 +207,57 @@ public class GameBoard : MonoBehaviour
 
         big_oomph = false;
 
-        #region Load Game if continued
+        #region Load Game pressed continue
 
-        if (_LOADEDGAME)
+        if (LOADEDGAME && PlayerPrefs.GetInt("Exists") == 1) // going in this
         {
             LoadGame.Load();
-            if (PlayerPrefs.GetInt("Exists") == 1) // just in case someone started with Continue...
+
+            // EVEN AFTER USING LOAD FUNCTION, CURRENCY TYPES NEED TO BE SWITCHED MANUALLY
+
+            for (int x = 0; x < GameBoard.board_size; x++)
             {
-                // EVEN AFTER USING LOAD FUNCTION, CURRENCY TYPES NEED TO BE SWITCHED MANUALLY
-
-                for (int x = 0; x < GameBoard.board_size; x++)
+                for (int y = 0; y < GameBoard.board_size; y++)
                 {
-                    for (int y = 0; y < GameBoard.board_size; y++)
-                    {
-                        Point p = new Point(x, y);
-                        int c = LoadCurrency[x, y];
-                        Tile Load_Tile = GetTileAtPoint(p);
-                        TilePiece Load_Tilepiece = Load_Tile.GetPiece();
-                        Load_Tilepiece.Initialize(c, p, Orbs[c]);
-                        Load_Tile.SetPiece(Load_Tilepiece);
-                    }
+                    Point p = new Point(x, y);
+                    int c = LoadCurrency[x, y];
+                    Tile Load_Tile = GetTileAtPoint(p);
+                    TilePiece Load_Tilepiece = Load_Tile.GetPiece();
+                    Load_Tilepiece.Initialize(c, p, Orbs[c]);
+                    Load_Tile.SetPiece(Load_Tilepiece);
                 }
-
-                Score.text = TotalDestroyedOrbsCounter.ToString();
-                ComboBreaker.text = "+ " + ComboCounter.ToString();
-
-                #region Load powerups
-
-                if (JewellerPowerUpsAmount > 0) JewellerPowerUpsAmountText.text = (JewellerPowerUpsAmount.ToString());
-                JewellerPowerUp.value = JewellerPowerUpProgress;
-                JewellerCooldownImage.fillAmount = JewellerCooldown;
-
-                if (VaalPowerUpsAmount > 0) VaalPowerUpsAmountText.text = (VaalPowerUpsAmount.ToString());
-                VaalPowerUp.value = VaalPowerUpProgress;
-                VaalCooldownImage.fillAmount = VaalCooldown;
-
-                if (RegretPowerUpsAmount > 0) RegretPowerUpsAmountText.text = (RegretPowerUpsAmount.ToString());
-                RegretPowerUp.value = RegretPowerUpProgress;
-                RegretCooldownImage.fillAmount = RegretCooldown;
-
-                if (ExaltedPowerUpsAmount > 0) ExaltedPowerUpsAmountText.text = (ExaltedPowerUpsAmount.ToString());
-                ExaltedPowerUp.value = ExaltedPowerUpProgress;
-                ExaltedCooldownImage.fillAmount = ExaltedCooldown;
-
-                #endregion
-
-                _LOADEDGAME = false;
             }
+
+            Score.text = TotalDestroyedOrbsCounter.ToString();
+            ComboBreaker.text = "+ " + ComboCounter.ToString();
+
+            #region Load powerups
+
+            if (JewellerPowerUpsAmount > 0) JewellerPowerUpsAmountText.text = (JewellerPowerUpsAmount.ToString());
+            JewellerPowerUp.value = JewellerPowerUpProgress;
+            JewellerCooldownImage.fillAmount = JewellerCooldown;
+
+            if (VaalPowerUpsAmount > 0) VaalPowerUpsAmountText.text = (VaalPowerUpsAmount.ToString());
+            VaalPowerUp.value = VaalPowerUpProgress;
+            VaalCooldownImage.fillAmount = VaalCooldown;
+
+            if (RegretPowerUpsAmount > 0) RegretPowerUpsAmountText.text = (RegretPowerUpsAmount.ToString());
+            RegretPowerUp.value = RegretPowerUpProgress;
+            RegretCooldownImage.fillAmount = RegretCooldown;
+
+            if (ExaltedPowerUpsAmount > 0) ExaltedPowerUpsAmountText.text = (ExaltedPowerUpsAmount.ToString());
+            ExaltedPowerUp.value = ExaltedPowerUpProgress;
+            ExaltedCooldownImage.fillAmount = ExaltedCooldown;
+
+            #endregion
+
+        }
+        else 
+        {
+            // Needs to be done because of static variables
+
+            TotalDestroyedOrbsCounter = 0;
+
         }
 
         #endregion
@@ -794,17 +803,75 @@ public class GameBoard : MonoBehaviour
 
         #region Cleanup after finished frame
 
-        JewellerPowerUpPointIndex = null;
+        JewellerPowerUpPointIndex = null; // reset jeweller powerup
+
+        #region Visual Cue for button access
+
+        #region Jeweller
+
+        if (JewellerPowerUpsAmount > 0) 
+        { 
+            JewellerButton.enabled = true;
+            JewellerButton.image.color = new Color(1, 1, 1, 1);
+        }
+        else
+        {
+            JewellerButton.enabled = false;
+            JewellerButton.image.color = new Color(1, 1, 1, 0.5f);
+        }
+
+        #endregion
+
+        #region Vaal
+        if (VaalPowerUpsAmount > 0)
+        {
+            VaalButton.enabled = true;
+            VaalButton.image.color = new Color(1, 1, 1, 1);
+        }
+        else
+        {
+            VaalButton.enabled = false;
+            VaalButton.image.color = new Color(1, 1, 1, 0.5f);
+        }
+        #endregion
+
+        #region Regret
+        if (RegretPowerUpsAmount > 0)
+        {
+            RegretButton.enabled = true;
+            RegretButton.image.color = new Color(1, 1, 1, 1);
+        }
+        else
+        {
+            RegretButton.enabled = false;
+            RegretButton.image.color = new Color(1, 1, 1, 0.5f);
+        }
+        #endregion
+
+        #region Exalted
+        if (ExaltedPowerUpsAmount > 0)
+        {
+            ExaltedButton.enabled = true;
+            ExaltedButton.image.color = new Color(1, 1, 1, 1);
+        }
+        else
+        {
+            ExaltedButton.enabled = false;
+            ExaltedButton.image.color = new Color(1, 1, 1, 0.5f);
+        }
+        #endregion
+
+        #endregion
 
         foreach (Point p in ToRemoveFromVaalPowerUpIndexes)
         {
             VaalPowerUpIndexes.Remove(p);
-        }
+        } // reset Vaal powerup
 
         foreach (Point p in ToRemoveFromExaltedPowerUpIndexes)
         {
             ExaltedPowerUpIndexes.Remove(p);
-        }
+        } // reset Exalted powerup
 
         VaalPowerUpEvent = 666;
         ExaltedPowerUpEvent = 0;
@@ -1409,10 +1476,64 @@ public class GameBoard : MonoBehaviour
         }
         VaalButton.enabled = false;
         VaalButton.enabled = true;
+    }   
+    public void PowerUp_Exalted()
+    {
+        if (ExaltedPowerUpsAmount >= 1 && ExaltedCooldown  <= 0)
+        {
+            ComboCounter = 0;
+            ComboBreaker.text = (ComboCounter.ToString());
+            ExaltedPowerUpsAmount--;
+            ExaltedCooldown = 1;
+            ExaltedCooldownImage.fillAmount = ExaltedCooldown;
+
+
+            Debug.Log("Executing event : Exalted orb");
+            ExaltedPowerUpEvent = 1;
+
+            List<Point> available = new List<Point>();
+            List<Point> selected_to_be_rekt = new List<Point>();
+
+            for (int x = 0; x < board_size; x++) //podwojny for - obsluga matrycy 2D
+            {
+                for (int y = 0; y < board_size; y++) //podwojny for - obsluga matrycy 2D
+                {
+
+                    Point p = new Point(x, y);
+                    Tile tile = GetTileAtPoint(p);
+                    if (tile.currency_type != 13)
+                    {
+                        available.Add(p);
+                    }
+                }
+            }
+            Debug.Log("Available : " + available.Count);
+            int NewCounter = available.Count / 2;
+
+            for (int z = 0; z < NewCounter; z++)
+            {
+                int selected = Mathf.CeilToInt(Random.Range(0, available.Count));   // select number from list position
+                Point p = available[selected];                                      // create point from selected number
+                selected_to_be_rekt.Add(p);                                         // add selected point to selected list
+                available.Remove(p);                                                // remove same point from available list to avoid removing same piece twice
+
+            }
+
+            Debug.Log("Removed pieces : " + selected_to_be_rekt.Count);
+            ExaltedPowerUpIndexes.AddRange(selected_to_be_rekt);
+        }
+
+        if (ExaltedPowerUpsAmount == 0)
+            ExaltedPowerUpsAmountText.text = ("");
+        else
+            ExaltedPowerUpsAmountText.text = ExaltedPowerUpsAmount.ToString();
+
+        ExaltedButton.enabled = false;
+        ExaltedButton.enabled = true;
     }
     public void PowerUp_VaalOrb_ShortCut()
     {
-        
+
         ComboCounter = 0;
         ComboBreaker.text = (ComboCounter.ToString());
 
@@ -1530,63 +1651,8 @@ public class GameBoard : MonoBehaviour
         }
 
         Debug.Log("Vaal orb selected event: " + selectedevent);
-        
+
     }
-    public void PowerUp_Exalted()
-    {
-        if (ExaltedPowerUpsAmount >= 1 && ExaltedCooldown  <= 0)
-        {
-            ComboCounter = 0;
-            ComboBreaker.text = (ComboCounter.ToString());
-            ExaltedPowerUpsAmount--;
-            ExaltedCooldown = 1;
-            ExaltedCooldownImage.fillAmount = ExaltedCooldown;
-
-
-            Debug.Log("Executing event : Exalted orb");
-            ExaltedPowerUpEvent = 1;
-
-            List<Point> available = new List<Point>();
-            List<Point> selected_to_be_rekt = new List<Point>();
-
-            for (int x = 0; x < board_size; x++) //podwojny for - obsluga matrycy 2D
-            {
-                for (int y = 0; y < board_size; y++) //podwojny for - obsluga matrycy 2D
-                {
-
-                    Point p = new Point(x, y);
-                    Tile tile = GetTileAtPoint(p);
-                    if (tile.currency_type != 13)
-                    {
-                        available.Add(p);
-                    }
-                }
-            }
-            Debug.Log("Available : " + available.Count);
-            int NewCounter = available.Count / 2;
-
-            for (int z = 0; z < NewCounter; z++)
-            {
-                int selected = Mathf.CeilToInt(Random.Range(0, available.Count));   // select number from list position
-                Point p = available[selected];                                      // create point from selected number
-                selected_to_be_rekt.Add(p);                                         // add selected point to selected list
-                available.Remove(p);                                                // remove same point from available list to avoid removing same piece twice
-
-            }
-
-            Debug.Log("Removed pieces : " + selected_to_be_rekt.Count);
-            ExaltedPowerUpIndexes.AddRange(selected_to_be_rekt);
-        }
-
-        if (ExaltedPowerUpsAmount == 0)
-            ExaltedPowerUpsAmountText.text = ("");
-        else
-            ExaltedPowerUpsAmountText.text = ExaltedPowerUpsAmount.ToString();
-
-        ExaltedButton.enabled = false;
-        ExaltedButton.enabled = true;
-    }
-
     public void PowerUp_Exalted_Shortcut()
     {
         
@@ -1628,6 +1694,7 @@ public class GameBoard : MonoBehaviour
             ExaltedPowerUpIndexes.AddRange(selected_to_be_rekt);        
 
     }
+
 #region PowerUpSubFunctions
 
     void RerollBoard()
